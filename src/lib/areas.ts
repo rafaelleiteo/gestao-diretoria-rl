@@ -8,7 +8,8 @@ export type AreaValue =
   | "graduacao"
   | "doutorado"
   | "dentistas-petropolis"
-  | "connect-lab";
+  | "connect-lab"
+  | "gestao";
 
 export type TabArea = Exclude<AreaValue, "geral">;
 
@@ -22,6 +23,7 @@ export const TAB_AREAS: AreaDef[] = [
   { slug: "diretoria", label: "Diretoria", phase1: true },
   { slug: "financeiro", label: "Financeiro", phase1: true },
   { slug: "consultorio", label: "Consultório", phase1: true },
+  { slug: "gestao", label: "Gestão" },
   { slug: "versa3d", label: "Versa3D" },
   { slug: "especializacao", label: "Especialização" },
   { slug: "graduacao", label: "Graduação" },
