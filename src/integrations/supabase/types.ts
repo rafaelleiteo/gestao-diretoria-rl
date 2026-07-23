@@ -18,30 +18,39 @@ export type Database = {
         Row: {
           area: Database["public"]["Enums"]["inbox_area"]
           concluido: boolean
+          concluido_em: string | null
           criado_em: string
+          dia_semana: string | null
           id: string
           lembrete_data_hora: string | null
           lembrete_enviado: boolean
+          prioridades: string[]
           texto: string
           tipo: Database["public"]["Enums"]["inbox_tipo"]
         }
         Insert: {
           area: Database["public"]["Enums"]["inbox_area"]
           concluido?: boolean
+          concluido_em?: string | null
           criado_em?: string
+          dia_semana?: string | null
           id?: string
           lembrete_data_hora?: string | null
           lembrete_enviado?: boolean
+          prioridades?: string[]
           texto: string
           tipo: Database["public"]["Enums"]["inbox_tipo"]
         }
         Update: {
           area?: Database["public"]["Enums"]["inbox_area"]
           concluido?: boolean
+          concluido_em?: string | null
           criado_em?: string
+          dia_semana?: string | null
           id?: string
           lembrete_data_hora?: string | null
           lembrete_enviado?: boolean
+          prioridades?: string[]
           texto?: string
           tipo?: Database["public"]["Enums"]["inbox_tipo"]
         }
