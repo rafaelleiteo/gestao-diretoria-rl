@@ -13,7 +13,9 @@ import { Route as GestaoRouteImport } from './routes/gestao'
 import { Route as ConsultorioRouteImport } from './routes/consultorio'
 import { Route as AreaRouteImport } from './routes/$area'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as GestaoIndexRouteImport } from './routes/gestao.index'
 import { Route as ConsultorioIndexRouteImport } from './routes/consultorio.index'
+import { Route as GestaoPromptsRouteImport } from './routes/gestao.prompts'
 import { Route as ConsultorioFichaPlanejamentoRouteImport } from './routes/consultorio.ficha-planejamento'
 
 const GestaoRoute = GestaoRouteImport.update({
@@ -36,10 +38,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GestaoIndexRoute = GestaoIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => GestaoRoute,
+} as any)
 const ConsultorioIndexRoute = ConsultorioIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ConsultorioRoute,
+} as any)
+const GestaoPromptsRoute = GestaoPromptsRouteImport.update({
+  id: '/prompts',
+  path: '/prompts',
+  getParentRoute: () => GestaoRoute,
 } as any)
 const ConsultorioFichaPlanejamentoRoute =
   ConsultorioFichaPlanejamentoRouteImport.update({
@@ -52,25 +64,30 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$area': typeof AreaRoute
   '/consultorio': typeof ConsultorioRouteWithChildren
-  '/gestao': typeof GestaoRoute
+  '/gestao': typeof GestaoRouteWithChildren
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
+  '/gestao/prompts': typeof GestaoPromptsRoute
   '/consultorio/': typeof ConsultorioIndexRoute
+  '/gestao/': typeof GestaoIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$area': typeof AreaRoute
-  '/gestao': typeof GestaoRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
+  '/gestao/prompts': typeof GestaoPromptsRoute
   '/consultorio': typeof ConsultorioIndexRoute
+  '/gestao': typeof GestaoIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$area': typeof AreaRoute
   '/consultorio': typeof ConsultorioRouteWithChildren
-  '/gestao': typeof GestaoRoute
+  '/gestao': typeof GestaoRouteWithChildren
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
+  '/gestao/prompts': typeof GestaoPromptsRoute
   '/consultorio/': typeof ConsultorioIndexRoute
+  '/gestao/': typeof GestaoIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -80,14 +97,17 @@ export interface FileRouteTypes {
     | '/consultorio'
     | '/gestao'
     | '/consultorio/ficha-planejamento'
+    | '/gestao/prompts'
     | '/consultorio/'
+    | '/gestao/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/$area'
-    | '/gestao'
     | '/consultorio/ficha-planejamento'
+    | '/gestao/prompts'
     | '/consultorio'
+    | '/gestao'
   id:
     | '__root__'
     | '/'
@@ -95,14 +115,16 @@ export interface FileRouteTypes {
     | '/consultorio'
     | '/gestao'
     | '/consultorio/ficha-planejamento'
+    | '/gestao/prompts'
     | '/consultorio/'
+    | '/gestao/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AreaRoute: typeof AreaRoute
   ConsultorioRoute: typeof ConsultorioRouteWithChildren
-  GestaoRoute: typeof GestaoRoute
+  GestaoRoute: typeof GestaoRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -135,12 +157,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gestao/': {
+      id: '/gestao/'
+      path: '/'
+      fullPath: '/gestao/'
+      preLoaderRoute: typeof GestaoIndexRouteImport
+      parentRoute: typeof GestaoRoute
+    }
     '/consultorio/': {
       id: '/consultorio/'
       path: '/'
       fullPath: '/consultorio/'
       preLoaderRoute: typeof ConsultorioIndexRouteImport
       parentRoute: typeof ConsultorioRoute
+    }
+    '/gestao/prompts': {
+      id: '/gestao/prompts'
+      path: '/prompts'
+      fullPath: '/gestao/prompts'
+      preLoaderRoute: typeof GestaoPromptsRouteImport
+      parentRoute: typeof GestaoRoute
     }
     '/consultorio/ficha-planejamento': {
       id: '/consultorio/ficha-planejamento'
@@ -166,11 +202,24 @@ const ConsultorioRouteWithChildren = ConsultorioRoute._addFileChildren(
   ConsultorioRouteChildren,
 )
 
+interface GestaoRouteChildren {
+  GestaoPromptsRoute: typeof GestaoPromptsRoute
+  GestaoIndexRoute: typeof GestaoIndexRoute
+}
+
+const GestaoRouteChildren: GestaoRouteChildren = {
+  GestaoPromptsRoute: GestaoPromptsRoute,
+  GestaoIndexRoute: GestaoIndexRoute,
+}
+
+const GestaoRouteWithChildren =
+  GestaoRoute._addFileChildren(GestaoRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AreaRoute: AreaRoute,
   ConsultorioRoute: ConsultorioRouteWithChildren,
-  GestaoRoute: GestaoRoute,
+  GestaoRoute: GestaoRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
