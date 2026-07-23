@@ -41,21 +41,6 @@ export function TopNav() {
                 }}
               >
                 <span className="whitespace-nowrap">{area.label}</span>
-                {area.phase1 && (
-                  <span
-                    className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider"
-                    style={
-                      active
-                        ? {
-                            backgroundColor: "rgba(255,255,255,0.22)",
-                            color: "#FFFFFF",
-                          }
-                        : { backgroundColor: "#EEF0FF", color: "#4F46E5" }
-                    }
-                  >
-                    Fase 1
-                  </span>
-                )}
               </Link>
             );
           })}
