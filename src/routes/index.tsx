@@ -1,24 +1,35 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { InboxForm, InboxList } from "@/components/Inbox";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "Início — Rafael Leite" },
+      { name: "description", content: "Caixa de entrada geral de mensagens, ideias e tarefas." },
+      { property: "og:title", content: "Início — Rafael Leite" },
+      { property: "og:description", content: "Caixa de entrada geral de mensagens, ideias e tarefas." },
+    ],
+  }),
+  component: Home,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function Home() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="mx-auto max-w-3xl px-6 py-10">
+      <div className="mb-8">
+        <h1
+          className="text-3xl font-bold"
+          style={{ color: "#111111", letterSpacing: "-0.02em" }}
+        >
+          Caixa de Entrada Geral
+        </h1>
+        <p className="mt-1 text-[14px]" style={{ color: "#6B7280" }}>
+          Registre rapidamente qualquer mensagem, ideia ou tarefa e marque a qual área ela pertence.
+        </p>
+      </div>
+
+      <InboxForm />
+      <InboxList emptyLabel="Nenhum item ainda. Adicione o primeiro acima." />
     </div>
   );
 }
