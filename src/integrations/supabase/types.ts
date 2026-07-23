@@ -41,6 +41,30 @@ export type Database = {
         }
         Relationships: []
       }
+      prompts: {
+        Row: {
+          criado_em: string
+          descricao: string | null
+          id: string
+          texto: string
+          titulo: string
+        }
+        Insert: {
+          criado_em?: string
+          descricao?: string | null
+          id?: string
+          texto: string
+          titulo: string
+        }
+        Update: {
+          criado_em?: string
+          descricao?: string | null
+          id?: string
+          texto?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -60,6 +84,7 @@ export type Database = {
         | "doutorado"
         | "dentistas-petropolis"
         | "connect-lab"
+        | "gestao"
       inbox_tipo: "mensagem" | "ideia" | "tarefa"
     }
     CompositeTypes: {
@@ -199,6 +224,7 @@ export const Constants = {
         "doutorado",
         "dentistas-petropolis",
         "connect-lab",
+        "gestao",
       ],
       inbox_tipo: ["mensagem", "ideia", "tarefa"],
     },
