@@ -1,10 +1,17 @@
-import { useState, useMemo } from "react";
+import {
+  useState,
+  useMemo,
+  useEffect,
+  createContext,
+  useContext,
+  type ReactNode,
+} from "react";
 import {
   useQuery,
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { Bell, BellRing } from "lucide-react";
+import { Bell, BellRing, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ALL_AREA_OPTIONS, areaLabel, type AreaValue } from "@/lib/areas";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,6 +22,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+type InboxEditCtx = {
+  editing: InboxItem | null;
+  startEdit: (item: InboxItem) => void;
+  clear: () => void;
+};
+const InboxEditContext = createContext<InboxEditCtx | null>(null);
+
+export function InboxEditProvider({ children }: { children: ReactNode }) {
+  const [editing, setEditing] = useState<InboxItem | null>(null);
+  return (
+    <InboxEditContext.Provider
+      value={{
+        editing,
+        startEdit: (item) => {
+          setEditing(item);
+          if (typeof window !== "undefined") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+        },
+        clear: () => setEditing(null),
+      }}
+    >
+      {children}
+    </InboxEditContext.Provider>
+  );
+}
+
+function useInboxEdit(): InboxEditCtx | null {
+  return useContext(InboxEditContext);
+}
+
 
 type Tipo = "mensagem" | "ideia" | "tarefa";
 
@@ -146,6 +185,10 @@ function diaLabel(d: DiaSemana): string {
 
 export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
   const qc = useQueryClient();
+  const editCtx = useInboxEdit();
+  const editing = editCtx?.editing ?? null;
+  const isEditing = editing !== null;
+
   const [texto, setTexto] = useState("");
   const [tipo, setTipo] = useState<Tipo | "">("");
   const [area, setArea] = useState<AreaValue | "">(defaultArea ?? "");
@@ -154,6 +197,37 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
   const [lembreteOn, setLembreteOn] = useState(false);
   const [lembreteLocal, setLembreteLocal] = useState<string>("");
   const [prioridadeError, setPrioridadeError] = useState(false);
+
+  // Sync form with the item being edited (or reset when leaving edit mode).
+  useEffect(() => {
+    if (editing) {
+      setTexto(editing.texto);
+      setTipo(editing.tipo);
+      setArea(editing.area);
+      setPrioridades(editing.prioridades ?? []);
+      setDiaSemana(editing.dia_semana ?? "nenhum");
+      if (editing.lembrete_data_hora) {
+        setLembreteOn(true);
+        setLembreteLocal(toLocalInputValue(new Date(editing.lembrete_data_hora)));
+      } else {
+        setLembreteOn(false);
+        setLembreteLocal("");
+      }
+      setPrioridadeError(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing?.id]);
+
+  const resetForm = () => {
+    setTexto("");
+    setTipo("");
+    if (!defaultArea) setArea("");
+    setPrioridades([]);
+    setDiaSemana("nenhum");
+    setLembreteOn(false);
+    setLembreteLocal("");
+    setPrioridadeError(false);
+  };
 
   const togglePrioridade = (p: Prioridade) => {
     setPrioridades((prev) => {
@@ -170,8 +244,46 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
     prioridades.length > 0 &&
     (!lembreteOn || lembreteLocal.length > 0);
 
-  const addMutation = useMutation({
+  const saveMutation = useMutation({
     mutationFn: async () => {
+      const lembreteIso =
+        lembreteOn && lembreteLocal
+          ? new Date(lembreteLocal).toISOString()
+          : null;
+
+      if (isEditing && editing) {
+        const patch: {
+          texto: string;
+          tipo: Tipo;
+          area: AreaValue;
+          prioridades: Prioridade[];
+          dia_semana: DiaSemana | null;
+          lembrete_data_hora: string | null;
+          lembrete_enviado?: boolean;
+        } = {
+          texto: texto.trim(),
+          tipo: tipo as Tipo,
+          area: area as AreaValue,
+          prioridades,
+          dia_semana: diaSemana === "nenhum" ? null : diaSemana,
+          lembrete_data_hora: lembreteIso,
+        };
+        // If the reminder date/time changed on an already-sent item,
+        // reset lembrete_enviado so it fires again.
+        if (
+          editing.lembrete_enviado &&
+          lembreteIso !== editing.lembrete_data_hora
+        ) {
+          patch.lembrete_enviado = false;
+        }
+        const { error } = await supabase
+          .from("inbox_items")
+          .update(patch as never)
+          .eq("id", editing.id);
+        if (error) throw error;
+        return;
+      }
+
       const payload: {
         texto: string;
         tipo: Tipo;
@@ -186,20 +298,13 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
         prioridades,
         dia_semana: diaSemana === "nenhum" ? null : diaSemana,
       };
-      if (lembreteOn && lembreteLocal) {
-        payload.lembrete_data_hora = new Date(lembreteLocal).toISOString();
-      }
+      if (lembreteIso) payload.lembrete_data_hora = lembreteIso;
       const { error } = await supabase.from("inbox_items").insert(payload as never);
       if (error) throw error;
     },
     onSuccess: () => {
-      setTexto("");
-      setTipo("");
-      if (!defaultArea) setArea("");
-      setPrioridades([]);
-      setDiaSemana("nenhum");
-      setLembreteOn(false);
-      setLembreteLocal("");
+      resetForm();
+      editCtx?.clear();
       qc.invalidateQueries({ queryKey: ["inbox_items"] });
     },
   });
@@ -210,14 +315,38 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
       return;
     }
     if (!canSubmit) return;
-    addMutation.mutate();
+    saveMutation.mutate();
   };
+
+  const handleCancelEdit = () => {
+    resetForm();
+    editCtx?.clear();
+  };
+
 
   return (
     <div
       className="rounded-2xl border bg-white p-5"
-      style={{ borderColor: "#EDEDED" }}
+      style={{ borderColor: isEditing ? "#4F46E5" : "#EDEDED" }}
     >
+      {isEditing && (
+        <div
+          className="mb-3 flex items-center justify-between rounded-lg px-3 py-2 text-[12px] font-medium"
+          style={{ backgroundColor: "#EEF0FF", color: "#4F46E5" }}
+        >
+          <span>Editando item</span>
+          <button
+            type="button"
+            onClick={handleCancelEdit}
+            className="inline-flex items-center gap-1"
+            style={{ color: "#4F46E5" }}
+          >
+            <X className="h-3.5 w-3.5" />
+            Cancelar
+          </button>
+        </div>
+      )}
+
       <textarea
         value={texto}
         onChange={(e) => setTexto(e.target.value)}
@@ -379,17 +508,35 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
           />
         )}
 
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          {isEditing && (
+            <button
+              type="button"
+              onClick={handleCancelEdit}
+              className="inline-flex items-center gap-1 rounded-full border px-4 py-2 text-[13px] font-medium"
+              style={{ borderColor: "#EDEDED", color: "#6B7280" }}
+            >
+              <X className="h-3.5 w-3.5" />
+              Cancelar
+            </button>
+          )}
           <button
             type="button"
-            disabled={addMutation.isPending}
+            disabled={saveMutation.isPending}
             onClick={handleSubmit}
             className="rounded-full px-5 py-2 text-[13px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
             style={{ backgroundColor: "#4F46E5" }}
           >
-            {addMutation.isPending ? "Adicionando..." : "Adicionar"}
+            {saveMutation.isPending
+              ? isEditing
+                ? "Salvando..."
+                : "Adicionando..."
+              : isEditing
+                ? "Salvar"
+                : "Adicionar"}
           </button>
         </div>
+
       </div>
 
       <TestReminderButton />
@@ -466,15 +613,18 @@ function ItemCard({
   onToggle: (item: InboxItem) => void;
   pending: boolean;
 }) {
+  const editCtx = useInboxEdit();
+  const canEdit = editCtx !== null;
+  const isEditingThis = editCtx?.editing?.id === item.id;
   return (
     <li
       className="flex items-start gap-3 rounded-xl border bg-white px-4 py-3 transition-opacity"
       style={{
-        borderColor: "#EDEDED",
+        borderColor: isEditingThis ? "#4F46E5" : "#EDEDED",
         opacity: pending ? 1 : 0.5,
       }}
     >
-      <div className="pt-0.5">
+      <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
         <Checkbox
           checked={!pending}
           onCheckedChange={() => onToggle(item)}
@@ -485,7 +635,24 @@ function ItemCard({
         style={{ backgroundColor: tipoDot(item.tipo) }}
         aria-label={item.tipo}
       />
-      <div className="min-w-0 flex-1">
+      <div
+        className="min-w-0 flex-1"
+        role={canEdit ? "button" : undefined}
+        tabIndex={canEdit ? 0 : undefined}
+        onClick={canEdit ? () => editCtx!.startEdit(item) : undefined}
+        onKeyDown={
+          canEdit
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  editCtx!.startEdit(item);
+                }
+              }
+            : undefined
+        }
+        style={canEdit ? { cursor: "pointer" } : undefined}
+      >
+
         <p
           className="whitespace-pre-wrap break-words text-[14px]"
           style={{
