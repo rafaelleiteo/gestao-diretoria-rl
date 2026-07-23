@@ -20,6 +20,8 @@ export type Database = {
           concluido: boolean
           criado_em: string
           id: string
+          lembrete_data_hora: string | null
+          lembrete_enviado: boolean
           texto: string
           tipo: Database["public"]["Enums"]["inbox_tipo"]
         }
@@ -28,6 +30,8 @@ export type Database = {
           concluido?: boolean
           criado_em?: string
           id?: string
+          lembrete_data_hora?: string | null
+          lembrete_enviado?: boolean
           texto: string
           tipo: Database["public"]["Enums"]["inbox_tipo"]
         }
@@ -36,6 +40,8 @@ export type Database = {
           concluido?: boolean
           criado_em?: string
           id?: string
+          lembrete_data_hora?: string | null
+          lembrete_enviado?: boolean
           texto?: string
           tipo?: Database["public"]["Enums"]["inbox_tipo"]
         }
