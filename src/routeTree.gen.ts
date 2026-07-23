@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UnlockRouteImport } from './routes/unlock'
 import { Route as GestaoRouteImport } from './routes/gestao'
 import { Route as ConsultorioRouteImport } from './routes/consultorio'
 import { Route as AreaRouteImport } from './routes/$area'
@@ -19,6 +20,11 @@ import { Route as GestaoPromptsRouteImport } from './routes/gestao.prompts'
 import { Route as ConsultorioFichaPlanejamentoRouteImport } from './routes/consultorio.ficha-planejamento'
 import { Route as ApiPublicHooksSendRemindersRouteImport } from './routes/api/public/hooks/send-reminders'
 
+const UnlockRoute = UnlockRouteImport.update({
+  id: '/unlock',
+  path: '/unlock',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GestaoRoute = GestaoRouteImport.update({
   id: '/gestao',
   path: '/gestao',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/$area': typeof AreaRoute
   '/consultorio': typeof ConsultorioRouteWithChildren
   '/gestao': typeof GestaoRouteWithChildren
+  '/unlock': typeof UnlockRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/gestao/prompts': typeof GestaoPromptsRoute
   '/consultorio/': typeof ConsultorioIndexRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$area': typeof AreaRoute
+  '/unlock': typeof UnlockRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/gestao/prompts': typeof GestaoPromptsRoute
   '/consultorio': typeof ConsultorioIndexRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/$area': typeof AreaRoute
   '/consultorio': typeof ConsultorioRouteWithChildren
   '/gestao': typeof GestaoRouteWithChildren
+  '/unlock': typeof UnlockRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/gestao/prompts': typeof GestaoPromptsRoute
   '/consultorio/': typeof ConsultorioIndexRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/$area'
     | '/consultorio'
     | '/gestao'
+    | '/unlock'
     | '/consultorio/ficha-planejamento'
     | '/gestao/prompts'
     | '/consultorio/'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$area'
+    | '/unlock'
     | '/consultorio/ficha-planejamento'
     | '/gestao/prompts'
     | '/consultorio'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/$area'
     | '/consultorio'
     | '/gestao'
+    | '/unlock'
     | '/consultorio/ficha-planejamento'
     | '/gestao/prompts'
     | '/consultorio/'
@@ -138,11 +150,19 @@ export interface RootRouteChildren {
   AreaRoute: typeof AreaRoute
   ConsultorioRoute: typeof ConsultorioRouteWithChildren
   GestaoRoute: typeof GestaoRouteWithChildren
+  UnlockRoute: typeof UnlockRoute
   ApiPublicHooksSendRemindersRoute: typeof ApiPublicHooksSendRemindersRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/unlock': {
+      id: '/unlock'
+      path: '/unlock'
+      fullPath: '/unlock'
+      preLoaderRoute: typeof UnlockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/gestao': {
       id: '/gestao'
       path: '/gestao'
@@ -241,18 +261,9 @@ const rootRouteChildren: RootRouteChildren = {
   AreaRoute: AreaRoute,
   ConsultorioRoute: ConsultorioRouteWithChildren,
   GestaoRoute: GestaoRouteWithChildren,
+  UnlockRoute: UnlockRoute,
   ApiPublicHooksSendRemindersRoute: ApiPublicHooksSendRemindersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
