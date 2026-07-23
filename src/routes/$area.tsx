@@ -48,6 +48,8 @@ function AreaPage() {
         </p>
       </div>
 
+      <AreaSummary area={slug} />
+
       <div className="mt-6">
         <h2
           className="text-lg font-semibold"
