@@ -327,8 +327,26 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
   return (
     <div
       className="rounded-2xl border bg-white p-5"
-      style={{ borderColor: "#EDEDED" }}
+      style={{ borderColor: isEditing ? "#4F46E5" : "#EDEDED" }}
     >
+      {isEditing && (
+        <div
+          className="mb-3 flex items-center justify-between rounded-lg px-3 py-2 text-[12px] font-medium"
+          style={{ backgroundColor: "#EEF0FF", color: "#4F46E5" }}
+        >
+          <span>Editando item</span>
+          <button
+            type="button"
+            onClick={handleCancelEdit}
+            className="inline-flex items-center gap-1"
+            style={{ color: "#4F46E5" }}
+          >
+            <X className="h-3.5 w-3.5" />
+            Cancelar
+          </button>
+        </div>
+      )}
+
       <textarea
         value={texto}
         onChange={(e) => setTexto(e.target.value)}
