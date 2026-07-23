@@ -14,7 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      inbox_items: {
+        Row: {
+          area: Database["public"]["Enums"]["inbox_area"]
+          concluido: boolean
+          criado_em: string
+          id: string
+          texto: string
+          tipo: Database["public"]["Enums"]["inbox_tipo"]
+        }
+        Insert: {
+          area: Database["public"]["Enums"]["inbox_area"]
+          concluido?: boolean
+          criado_em?: string
+          id?: string
+          texto: string
+          tipo: Database["public"]["Enums"]["inbox_tipo"]
+        }
+        Update: {
+          area?: Database["public"]["Enums"]["inbox_area"]
+          concluido?: boolean
+          criado_em?: string
+          id?: string
+          texto?: string
+          tipo?: Database["public"]["Enums"]["inbox_tipo"]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +49,18 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      inbox_area:
+        | "geral"
+        | "diretoria"
+        | "financeiro"
+        | "consultorio"
+        | "versa3d"
+        | "especializacao"
+        | "graduacao"
+        | "doutorado"
+        | "dentistas-petropolis"
+        | "connect-lab"
+      inbox_tipo: "mensagem" | "ideia" | "tarefa"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +187,20 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      inbox_area: [
+        "geral",
+        "diretoria",
+        "financeiro",
+        "consultorio",
+        "versa3d",
+        "especializacao",
+        "graduacao",
+        "doutorado",
+        "dentistas-petropolis",
+        "connect-lab",
+      ],
+      inbox_tipo: ["mensagem", "ideia", "tarefa"],
+    },
   },
 } as const
