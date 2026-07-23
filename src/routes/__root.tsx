@@ -4,14 +4,17 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
+  redirect,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { TopNav } from "@/components/TopNav";
+import { getUnlockStatus } from "@/lib/gate.functions";
 
 function NotFoundComponent() {
   return (
@@ -66,6 +69,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  beforeLoad: async ({ location }) => {
+    if (location.pathname === "/unlock") return;
+    const { unlocked } = await getUnlockStatus();
+    if (!unlocked) throw redirect({ to: "/unlock" });
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -114,12 +122,17 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isUnlock = pathname === "/unlock";
 
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen" style={{ backgroundColor: "#FFFFFF" }}>
-        <TopNav />
-        <main style={{ backgroundColor: "#FAFAFA" }} className="min-h-[calc(100vh-57px)]">
+        {!isUnlock && <TopNav />}
+        <main
+          style={{ backgroundColor: "#FAFAFA" }}
+          className={isUnlock ? "min-h-screen" : "min-h-[calc(100vh-57px)]"}
+        >
           <Outlet />
         </main>
       </div>

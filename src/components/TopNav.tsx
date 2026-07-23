@@ -1,8 +1,18 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { TAB_AREAS } from "@/lib/areas";
+import { lockSite } from "@/lib/gate.functions";
 
 export function TopNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const router = useRouter();
+  const lock = useServerFn(lockSite);
+
+  async function onLogout() {
+    await lock();
+    await router.invalidate();
+    await router.navigate({ to: "/unlock" });
+  }
 
   return (
     <header
@@ -45,6 +55,15 @@ export function TopNav() {
             );
           })}
         </nav>
+
+        <button
+          type="button"
+          onClick={onLogout}
+          className="ml-auto shrink-0 rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors"
+          style={{ borderColor: "#EDEDED", color: "#6B7280" }}
+        >
+          Sair
+        </button>
       </div>
     </header>
   );
