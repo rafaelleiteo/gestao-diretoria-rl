@@ -5,6 +5,14 @@ import { lockSite } from "@/lib/gate.functions";
 
 export function TopNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const router = useRouter();
+  const lock = useServerFn(lockSite);
+
+  async function onLogout() {
+    await lock();
+    await router.invalidate();
+    await router.navigate({ to: "/unlock" });
+  }
 
   return (
     <header
