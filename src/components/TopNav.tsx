@@ -55,6 +55,15 @@ export function TopNav() {
             );
           })}
         </nav>
+
+        <button
+          type="button"
+          onClick={onLogout}
+          className="ml-auto shrink-0 rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors"
+          style={{ borderColor: "#EDEDED", color: "#6B7280" }}
+        >
+          Sair
+        </button>
       </div>
     </header>
   );
