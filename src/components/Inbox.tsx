@@ -490,17 +490,35 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
           />
         )}
 
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          {isEditing && (
+            <button
+              type="button"
+              onClick={handleCancelEdit}
+              className="inline-flex items-center gap-1 rounded-full border px-4 py-2 text-[13px] font-medium"
+              style={{ borderColor: "#EDEDED", color: "#6B7280" }}
+            >
+              <X className="h-3.5 w-3.5" />
+              Cancelar
+            </button>
+          )}
           <button
             type="button"
-            disabled={addMutation.isPending}
+            disabled={saveMutation.isPending}
             onClick={handleSubmit}
             className="rounded-full px-5 py-2 text-[13px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
             style={{ backgroundColor: "#4F46E5" }}
           >
-            {addMutation.isPending ? "Adicionando..." : "Adicionar"}
+            {saveMutation.isPending
+              ? isEditing
+                ? "Salvando..."
+                : "Adicionando..."
+              : isEditing
+                ? "Salvar"
+                : "Adicionar"}
           </button>
         </div>
+
       </div>
 
       <TestReminderButton />
