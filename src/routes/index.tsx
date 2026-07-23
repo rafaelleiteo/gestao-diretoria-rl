@@ -15,22 +15,24 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10">
-      <div className="mb-8">
-        <h1
-          className="text-3xl font-bold"
-          style={{ color: "#111111", letterSpacing: "-0.02em" }}
-        >
-          Caixa de Entrada Geral
-        </h1>
-        <p className="mt-1 text-[14px]" style={{ color: "#6B7280" }}>
-          Registre rapidamente qualquer mensagem, ideia ou tarefa e marque a qual área ela pertence.
-        </p>
-      </div>
+    <InboxEditProvider>
+      <div className="mx-auto max-w-3xl px-6 py-10">
+        <div className="mb-8">
+          <h1
+            className="text-3xl font-bold"
+            style={{ color: "#111111", letterSpacing: "-0.02em" }}
+          >
+            Caixa de Entrada Geral
+          </h1>
+          <p className="mt-1 text-[14px]" style={{ color: "#6B7280" }}>
+            Registre rapidamente qualquer mensagem, ideia ou tarefa e marque a qual área ela pertence.
+          </p>
+        </div>
 
-      <InboxForm />
-      <TodayList />
-      <InboxList emptyLabel="Nenhum item ainda. Adicione o primeiro acima." />
-    </div>
+        <InboxForm />
+        <TodayList />
+        <InboxList emptyLabel="Nenhum item ainda. Adicione o primeiro acima." />
+      </div>
+    </InboxEditProvider>
   );
 }
