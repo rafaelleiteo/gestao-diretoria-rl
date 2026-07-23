@@ -4,6 +4,7 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
+import { Bell, BellRing } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ALL_AREA_OPTIONS, areaLabel, type AreaValue } from "@/lib/areas";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,6 +25,8 @@ export type InboxItem = {
   area: AreaValue;
   concluido: boolean;
   criado_em: string;
+  lembrete_data_hora: string | null;
+  lembrete_enviado: boolean;
 };
 
 const TIPO_OPTIONS: { value: Tipo; label: string }[] = [
@@ -38,27 +41,64 @@ function tipoDot(tipo: Tipo): string {
   return "#6B7280";
 }
 
+function formatLembrete(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+// Format a Date to the local-time string expected by <input type="datetime-local">
+function toLocalInputValue(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+    d.getHours(),
+  )}:${pad(d.getMinutes())}`;
+}
+
 export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
   const qc = useQueryClient();
   const [texto, setTexto] = useState("");
   const [tipo, setTipo] = useState<Tipo | "">("");
   const [area, setArea] = useState<AreaValue | "">(defaultArea ?? "");
+  const [lembreteOn, setLembreteOn] = useState(false);
+  const [lembreteLocal, setLembreteLocal] = useState<string>("");
 
-  const canSubmit = texto.trim().length > 0 && tipo !== "" && area !== "";
+  const canSubmit =
+    texto.trim().length > 0 &&
+    tipo !== "" &&
+    area !== "" &&
+    (!lembreteOn || lembreteLocal.length > 0);
 
   const addMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("inbox_items").insert({
+      const payload: {
+        texto: string;
+        tipo: Tipo;
+        area: AreaValue;
+        lembrete_data_hora?: string | null;
+      } = {
         texto: texto.trim(),
         tipo: tipo as Tipo,
         area: area as AreaValue,
-      });
+      };
+      if (lembreteOn && lembreteLocal) {
+        // datetime-local is in the user's local timezone; convert to ISO/UTC.
+        payload.lembrete_data_hora = new Date(lembreteLocal).toISOString();
+      }
+      const { error } = await supabase.from("inbox_items").insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
       setTexto("");
       setTipo("");
       if (!defaultArea) setArea("");
+      setLembreteOn(false);
+      setLembreteLocal("");
       qc.invalidateQueries({ queryKey: ["inbox_items"] });
     },
   });
@@ -129,6 +169,49 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
             {addMutation.isPending ? "Adicionando..." : "Adicionar"}
           </button>
         </div>
+      </div>
+
+      <div
+        className="mt-4 flex flex-wrap items-center gap-3 border-t pt-3"
+        style={{ borderColor: "#EDEDED" }}
+      >
+        <button
+          type="button"
+          role="switch"
+          aria-checked={lembreteOn}
+          onClick={() => {
+            const next = !lembreteOn;
+            setLembreteOn(next);
+            if (next && !lembreteLocal) {
+              const d = new Date(Date.now() + 60 * 60 * 1000);
+              setLembreteLocal(toLocalInputValue(d));
+            }
+          }}
+          className="flex items-center gap-2 text-[13px] font-medium"
+          style={{ color: lembreteOn ? "#4F46E5" : "#6B7280" }}
+        >
+          <span
+            className="relative inline-block h-5 w-9 rounded-full transition-colors"
+            style={{ backgroundColor: lembreteOn ? "#4F46E5" : "#E5E7EB" }}
+          >
+            <span
+              className="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all"
+              style={{ left: lembreteOn ? "18px" : "2px" }}
+            />
+          </span>
+          <Bell className="h-3.5 w-3.5" />
+          Adicionar lembrete
+        </button>
+
+        {lembreteOn && (
+          <input
+            type="datetime-local"
+            value={lembreteLocal}
+            onChange={(e) => setLembreteLocal(e.target.value)}
+            className="h-9 rounded-full border bg-[#FAFAFA] px-3 text-[13px] outline-none focus:border-[#4F46E5]"
+            style={{ borderColor: "#EDEDED", color: "#111111" }}
+          />
+        )}
       </div>
     </div>
   );
@@ -257,6 +340,34 @@ export function InboxList({
                   >
                     {areaLabel(item.area)}
                   </span>
+                  {item.lembrete_data_hora && (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium"
+                      style={
+                        item.lembrete_enviado
+                          ? {
+                              backgroundColor: "#F5F5F5",
+                              color: "#B0B4BC",
+                            }
+                          : {
+                              backgroundColor: "#FEF3C7",
+                              color: "#B45309",
+                            }
+                      }
+                      title={
+                        item.lembrete_enviado
+                          ? "Lembrete já notificado"
+                          : "Lembrete agendado"
+                      }
+                    >
+                      {item.lembrete_enviado ? (
+                        <Bell className="h-3 w-3" />
+                      ) : (
+                        <BellRing className="h-3 w-3" />
+                      )}
+                      {formatLembrete(item.lembrete_data_hora)}
+                    </span>
+                  )}
                 </div>
               </div>
             </li>
