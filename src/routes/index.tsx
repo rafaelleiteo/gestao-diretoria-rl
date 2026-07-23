@@ -29,6 +29,7 @@ function Home() {
       </div>
 
       <InboxForm />
+      <TodayList />
       <InboxList emptyLabel="Nenhum item ainda. Adicione o primeiro acima." />
     </div>
   );
