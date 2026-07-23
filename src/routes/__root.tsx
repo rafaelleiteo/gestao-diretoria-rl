@@ -122,12 +122,17 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isUnlock = pathname === "/unlock";
 
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen" style={{ backgroundColor: "#FFFFFF" }}>
-        <TopNav />
-        <main style={{ backgroundColor: "#FAFAFA" }} className="min-h-[calc(100vh-57px)]">
+        {!isUnlock && <TopNav />}
+        <main
+          style={{ backgroundColor: "#FAFAFA" }}
+          className={isUnlock ? "min-h-screen" : "min-h-[calc(100vh-57px)]"}
+        >
           <Outlet />
         </main>
       </div>
