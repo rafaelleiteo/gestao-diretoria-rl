@@ -21,6 +21,8 @@ function ConsultorioIndex() {
         </p>
       </div>
 
+      <AreaSummary area="consultorio" />
+
       <div className="mt-6">
         <h2
           className="text-lg font-semibold"
