@@ -33,6 +33,7 @@ function Home() {
         <InboxForm />
         <TodayList />
         <InboxList emptyLabel="Nenhum item ainda. Adicione o primeiro acima." />
+        <HomeSummary />
       </div>
     </InboxEditProvider>
   );
