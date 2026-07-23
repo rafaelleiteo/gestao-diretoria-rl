@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { InboxList } from "@/components/Inbox";
+import { AreaSummary } from "@/components/InboxSummary";
 
 export const Route = createFileRoute("/consultorio/")({
   component: ConsultorioIndex,
@@ -19,6 +20,8 @@ function ConsultorioIndex() {
           Selecione uma ferramenta no menu à esquerda.
         </p>
       </div>
+
+      <AreaSummary area="consultorio" />
 
       <div className="mt-6">
         <h2

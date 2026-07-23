@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnlockRouteImport } from './routes/unlock'
 import { Route as GestaoRouteImport } from './routes/gestao'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConsultorioRouteImport } from './routes/consultorio'
 import { Route as AreaRouteImport } from './routes/$area'
 import { Route as IndexRouteImport } from './routes/index'
@@ -28,6 +29,11 @@ const UnlockRoute = UnlockRouteImport.update({
 const GestaoRoute = GestaoRouteImport.update({
   id: '/gestao',
   path: '/gestao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConsultorioRoute = ConsultorioRouteImport.update({
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$area': typeof AreaRoute
   '/consultorio': typeof ConsultorioRouteWithChildren
+  '/dashboard': typeof DashboardRoute
   '/gestao': typeof GestaoRouteWithChildren
   '/unlock': typeof UnlockRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$area': typeof AreaRoute
+  '/dashboard': typeof DashboardRoute
   '/unlock': typeof UnlockRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/gestao/prompts': typeof GestaoPromptsRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/$area': typeof AreaRoute
   '/consultorio': typeof ConsultorioRouteWithChildren
+  '/dashboard': typeof DashboardRoute
   '/gestao': typeof GestaoRouteWithChildren
   '/unlock': typeof UnlockRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$area'
     | '/consultorio'
+    | '/dashboard'
     | '/gestao'
     | '/unlock'
     | '/consultorio/ficha-planejamento'
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$area'
+    | '/dashboard'
     | '/unlock'
     | '/consultorio/ficha-planejamento'
     | '/gestao/prompts'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$area'
     | '/consultorio'
+    | '/dashboard'
     | '/gestao'
     | '/unlock'
     | '/consultorio/ficha-planejamento'
@@ -149,6 +161,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AreaRoute: typeof AreaRoute
   ConsultorioRoute: typeof ConsultorioRouteWithChildren
+  DashboardRoute: typeof DashboardRoute
   GestaoRoute: typeof GestaoRouteWithChildren
   UnlockRoute: typeof UnlockRoute
   ApiPublicHooksSendRemindersRoute: typeof ApiPublicHooksSendRemindersRoute
@@ -168,6 +181,13 @@ declare module '@tanstack/react-router' {
       path: '/gestao'
       fullPath: '/gestao'
       preLoaderRoute: typeof GestaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/consultorio': {
@@ -260,6 +280,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AreaRoute: AreaRoute,
   ConsultorioRoute: ConsultorioRouteWithChildren,
+  DashboardRoute: DashboardRoute,
   GestaoRoute: GestaoRouteWithChildren,
   UnlockRoute: UnlockRoute,
   ApiPublicHooksSendRemindersRoute: ApiPublicHooksSendRemindersRoute,

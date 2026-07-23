@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { InboxEditProvider, InboxForm, InboxList, TodayList } from "@/components/Inbox";
+import { HomeSummary } from "@/components/InboxSummary";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,6 +33,7 @@ function Home() {
         <InboxForm />
         <TodayList />
         <InboxList emptyLabel="Nenhum item ainda. Adicione o primeiro acima." />
+        <HomeSummary />
       </div>
     </InboxEditProvider>
   );
