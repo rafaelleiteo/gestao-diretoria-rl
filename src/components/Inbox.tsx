@@ -18,6 +18,15 @@ import {
 
 type Tipo = "mensagem" | "ideia" | "tarefa";
 
+export type Prioridade =
+  | "urgente"
+  | "importante"
+  | "hoje"
+  | "longo_prazo"
+  | "indiferente";
+
+export type DiaSemana = "seg" | "ter" | "qua" | "qui" | "sex" | "sab" | "dom";
+
 export type InboxItem = {
   id: string;
   texto: string;
@@ -27,6 +36,9 @@ export type InboxItem = {
   criado_em: string;
   lembrete_data_hora: string | null;
   lembrete_enviado: boolean;
+  prioridades: Prioridade[];
+  dia_semana: DiaSemana | null;
+  concluido_em: string | null;
 };
 
 const TIPO_OPTIONS: { value: Tipo; label: string }[] = [
@@ -34,6 +46,63 @@ const TIPO_OPTIONS: { value: Tipo; label: string }[] = [
   { value: "ideia", label: "Ideia" },
   { value: "tarefa", label: "Tarefa" },
 ];
+
+const PRIORIDADE_OPTIONS: { value: Prioridade; label: string }[] = [
+  { value: "urgente", label: "Urgente" },
+  { value: "importante", label: "Importante" },
+  { value: "hoje", label: "Hoje" },
+  { value: "longo_prazo", label: "Longo prazo" },
+  { value: "indiferente", label: "Indiferente" },
+];
+
+const DIA_OPTIONS: { value: DiaSemana; label: string }[] = [
+  { value: "seg", label: "Seg" },
+  { value: "ter", label: "Ter" },
+  { value: "qua", label: "Qua" },
+  { value: "qui", label: "Qui" },
+  { value: "sex", label: "Sex" },
+  { value: "sab", label: "Sáb" },
+  { value: "dom", label: "Dom" },
+];
+
+// Map JS Date.getDay() (0=dom..6=sab) to our DiaSemana values.
+const JS_DAY_TO_DIA: DiaSemana[] = [
+  "dom",
+  "seg",
+  "ter",
+  "qua",
+  "qui",
+  "sex",
+  "sab",
+];
+
+function todayDia(): DiaSemana {
+  return JS_DAY_TO_DIA[new Date().getDay()];
+}
+
+// Most recent occurrence (as a Date at 00:00 local) of the given weekday.
+// If today matches, returns today at 00:00.
+function mostRecentOccurrence(dia: DiaSemana): Date {
+  const now = new Date();
+  const todayIdx = now.getDay();
+  const target = JS_DAY_TO_DIA.indexOf(dia);
+  let diff = todayIdx - target;
+  if (diff < 0) diff += 7;
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  d.setDate(d.getDate() - diff);
+  return d;
+}
+
+// A recurring item (dia_semana set) is pending in the current occurrence
+// unless it was completed at/after the most recent occurrence.
+export function isItemPending(item: InboxItem): boolean {
+  if (item.dia_semana) {
+    if (!item.concluido || !item.concluido_em) return true;
+    const occ = mostRecentOccurrence(item.dia_semana);
+    return new Date(item.concluido_em) < occ;
+  }
+  return !item.concluido;
+}
 
 function tipoDot(tipo: Tipo): string {
   if (tipo === "tarefa") return "#4F46E5";
@@ -52,7 +121,6 @@ function formatLembrete(iso: string): string {
   });
 }
 
-// Format a Date to the local-time string expected by <input type="datetime-local">
 function toLocalInputValue(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
@@ -60,18 +128,46 @@ function toLocalInputValue(d: Date): string {
   )}:${pad(d.getMinutes())}`;
 }
 
+function prioridadeStyle(p: Prioridade): { bg: string; color: string } {
+  if (p === "urgente") return { bg: "#FEE2E2", color: "#B91C1C" };
+  if (p === "importante") return { bg: "#FEF3C7", color: "#B45309" };
+  if (p === "hoje") return { bg: "#EEF0FF", color: "#4F46E5" };
+  if (p === "longo_prazo") return { bg: "#E0E7FF", color: "#3730A3" };
+  return { bg: "#FAFAFA", color: "#6B7280" };
+}
+
+function prioridadeLabel(p: Prioridade): string {
+  return PRIORIDADE_OPTIONS.find((o) => o.value === p)?.label ?? p;
+}
+
+function diaLabel(d: DiaSemana): string {
+  return DIA_OPTIONS.find((o) => o.value === d)?.label ?? d;
+}
+
 export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
   const qc = useQueryClient();
   const [texto, setTexto] = useState("");
   const [tipo, setTipo] = useState<Tipo | "">("");
   const [area, setArea] = useState<AreaValue | "">(defaultArea ?? "");
+  const [prioridades, setPrioridades] = useState<Prioridade[]>([]);
+  const [diaSemana, setDiaSemana] = useState<DiaSemana | "nenhum">("nenhum");
   const [lembreteOn, setLembreteOn] = useState(false);
   const [lembreteLocal, setLembreteLocal] = useState<string>("");
+  const [prioridadeError, setPrioridadeError] = useState(false);
+
+  const togglePrioridade = (p: Prioridade) => {
+    setPrioridades((prev) => {
+      const next = prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p];
+      if (next.length > 0) setPrioridadeError(false);
+      return next;
+    });
+  };
 
   const canSubmit =
     texto.trim().length > 0 &&
     tipo !== "" &&
     area !== "" &&
+    prioridades.length > 0 &&
     (!lembreteOn || lembreteLocal.length > 0);
 
   const addMutation = useMutation({
@@ -80,28 +176,42 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
         texto: string;
         tipo: Tipo;
         area: AreaValue;
+        prioridades: Prioridade[];
+        dia_semana?: DiaSemana | null;
         lembrete_data_hora?: string | null;
       } = {
         texto: texto.trim(),
         tipo: tipo as Tipo,
         area: area as AreaValue,
+        prioridades,
+        dia_semana: diaSemana === "nenhum" ? null : diaSemana,
       };
       if (lembreteOn && lembreteLocal) {
-        // datetime-local is in the user's local timezone; convert to ISO/UTC.
         payload.lembrete_data_hora = new Date(lembreteLocal).toISOString();
       }
-      const { error } = await supabase.from("inbox_items").insert(payload);
+      const { error } = await supabase.from("inbox_items").insert(payload as never);
       if (error) throw error;
     },
     onSuccess: () => {
       setTexto("");
       setTipo("");
       if (!defaultArea) setArea("");
+      setPrioridades([]);
+      setDiaSemana("nenhum");
       setLembreteOn(false);
       setLembreteLocal("");
       qc.invalidateQueries({ queryKey: ["inbox_items"] });
     },
   });
+
+  const handleSubmit = () => {
+    if (prioridades.length === 0) {
+      setPrioridadeError(true);
+      return;
+    }
+    if (!canSubmit) return;
+    addMutation.mutate();
+  };
 
   return (
     <div
@@ -157,17 +267,73 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
             </SelectContent>
           </Select>
         </div>
+      </div>
 
-        <div className="ml-auto">
-          <button
-            type="button"
-            disabled={!canSubmit || addMutation.isPending}
-            onClick={() => addMutation.mutate()}
-            className="rounded-full px-5 py-2 text-[13px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
-            style={{ backgroundColor: "#4F46E5" }}
-          >
-            {addMutation.isPending ? "Adicionando..." : "Adicionar"}
-          </button>
+      {/* Prioridade */}
+      <div className="mt-4">
+        <div
+          className="mb-2 text-[12px] font-semibold uppercase tracking-wider"
+          style={{ color: "#6B7280" }}
+        >
+          Prioridade
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {PRIORIDADE_OPTIONS.map((opt) => {
+            const active = prioridades.includes(opt.value);
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => togglePrioridade(opt.value)}
+                className="rounded-full px-3 py-1 text-[12px] font-medium transition-colors hover:bg-[#FAFAFA]"
+                style={
+                  active
+                    ? { backgroundColor: "#4F46E5", color: "#FFFFFF" }
+                    : { backgroundColor: "transparent", color: "#6B7280", border: "1px solid #EDEDED" }
+                }
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+        {prioridadeError && (
+          <p className="mt-2 text-[12px]" style={{ color: "#B91C1C" }}>
+            Selecione ao menos uma prioridade.
+          </p>
+        )}
+      </div>
+
+      {/* Dia a ser realizado */}
+      <div className="mt-4">
+        <div
+          className="mb-2 text-[12px] font-semibold uppercase tracking-wider"
+          style={{ color: "#6B7280" }}
+        >
+          Dia a ser realizado
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="min-w-[160px]">
+            <Select
+              value={diaSemana}
+              onValueChange={(v) => setDiaSemana(v as DiaSemana | "nenhum")}
+            >
+              <SelectTrigger className="h-9 rounded-full border-[#EDEDED] bg-[#FAFAFA] text-[13px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="nenhum">Nenhum</SelectItem>
+                {DIA_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <p className="text-[11px]" style={{ color: "#B0B4BC" }}>
+            Só planejamento — não dispara notificação no Telegram.
+          </p>
         </div>
       </div>
 
@@ -212,6 +378,18 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
             style={{ borderColor: "#EDEDED", color: "#111111" }}
           />
         )}
+
+        <div className="ml-auto">
+          <button
+            type="button"
+            disabled={addMutation.isPending}
+            onClick={handleSubmit}
+            className="rounded-full px-5 py-2 text-[13px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+            style={{ backgroundColor: "#4F46E5" }}
+          >
+            {addMutation.isPending ? "Adicionando..." : "Adicionar"}
+          </button>
+        </div>
       </div>
 
       <TestReminderButton />
@@ -260,17 +438,8 @@ function TestReminderButton() {
   );
 }
 
-export function InboxList({
-  areaFilter,
-  emptyLabel = "Nenhum item ainda.",
-}: {
-  areaFilter?: AreaValue;
-  emptyLabel?: string;
-}) {
-  const qc = useQueryClient();
-  const [showConcluidos, setShowConcluidos] = useState(false);
-
-  const { data, isLoading } = useQuery({
+function useInboxItems(areaFilter?: AreaValue) {
+  return useQuery({
     queryKey: ["inbox_items", areaFilter ?? "all"],
     queryFn: async () => {
       let query = supabase
@@ -280,25 +449,205 @@ export function InboxList({
       if (areaFilter) query = query.eq("area", areaFilter);
       const { data, error } = await query;
       if (error) throw error;
-      return data as InboxItem[];
+      return (data as unknown as InboxItem[]).map((i) => ({
+        ...i,
+        prioridades: (i.prioridades ?? []) as Prioridade[],
+      }));
     },
   });
+}
 
-  const toggleMutation = useMutation({
+function ItemCard({
+  item,
+  onToggle,
+  pending,
+}: {
+  item: InboxItem;
+  onToggle: (item: InboxItem) => void;
+  pending: boolean;
+}) {
+  return (
+    <li
+      className="flex items-start gap-3 rounded-xl border bg-white px-4 py-3 transition-opacity"
+      style={{
+        borderColor: "#EDEDED",
+        opacity: pending ? 1 : 0.5,
+      }}
+    >
+      <div className="pt-0.5">
+        <Checkbox
+          checked={!pending}
+          onCheckedChange={() => onToggle(item)}
+        />
+      </div>
+      <span
+        className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full"
+        style={{ backgroundColor: tipoDot(item.tipo) }}
+        aria-label={item.tipo}
+      />
+      <div className="min-w-0 flex-1">
+        <p
+          className="whitespace-pre-wrap break-words text-[14px]"
+          style={{
+            color: "#111111",
+            textDecoration: !pending ? "line-through" : "none",
+          }}
+        >
+          {item.texto}
+        </p>
+        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px]">
+          <span
+            className="rounded-full px-2 py-0.5 font-medium capitalize"
+            style={{ backgroundColor: "#FAFAFA", color: "#6B7280" }}
+          >
+            {item.tipo}
+          </span>
+          <span
+            className="rounded-full px-2 py-0.5 font-medium"
+            style={{ backgroundColor: "#EEF0FF", color: "#4F46E5" }}
+          >
+            {areaLabel(item.area)}
+          </span>
+          {item.prioridades?.map((p) => {
+            const s = prioridadeStyle(p);
+            return (
+              <span
+                key={p}
+                className="rounded-full px-2 py-0.5 font-medium"
+                style={{ backgroundColor: s.bg, color: s.color }}
+              >
+                {prioridadeLabel(p)}
+              </span>
+            );
+          })}
+          {item.dia_semana && (
+            <span
+              className="rounded-full px-2 py-0.5 font-medium"
+              style={{ backgroundColor: "#F5F5F5", color: "#6B7280" }}
+              title="Dia planejado"
+            >
+              {diaLabel(item.dia_semana)}
+            </span>
+          )}
+          {item.lembrete_data_hora && (
+            <span
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium"
+              style={
+                item.lembrete_enviado
+                  ? { backgroundColor: "#F5F5F5", color: "#B0B4BC" }
+                  : { backgroundColor: "#FEF3C7", color: "#B45309" }
+              }
+              title={
+                item.lembrete_enviado
+                  ? "Lembrete já notificado"
+                  : "Lembrete agendado"
+              }
+            >
+              {item.lembrete_enviado ? (
+                <Bell className="h-3 w-3" />
+              ) : (
+                <BellRing className="h-3 w-3" />
+              )}
+              {formatLembrete(item.lembrete_data_hora)}
+            </span>
+          )}
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function useToggle() {
+  const qc = useQueryClient();
+  return useMutation({
     mutationFn: async (item: InboxItem) => {
+      const pending = isItemPending(item);
+      // If currently pending, mark done. If done, reopen.
       const { error } = await supabase
         .from("inbox_items")
-        .update({ concluido: !item.concluido })
+        .update({ concluido: pending })
         .eq("id", item.id);
       if (error) throw error;
     },
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: ["inbox_items"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["inbox_items"] }),
   });
+}
+
+export function TodayList() {
+  const { data, isLoading } = useInboxItems();
+  const toggle = useToggle();
+
+  const todayItems = useMemo(() => {
+    if (!data) return [];
+    const today = todayDia();
+    const seen = new Set<string>();
+    const result: InboxItem[] = [];
+    for (const item of data) {
+      const matchesHoje = item.prioridades?.includes("hoje");
+      const matchesDia =
+        item.dia_semana === today && isItemPending(item);
+      if ((matchesHoje || matchesDia) && !seen.has(item.id)) {
+        seen.add(item.id);
+        result.push(item);
+      }
+    }
+    return result;
+  }, [data]);
+
+  return (
+    <div className="mt-6">
+      <div className="mb-3 flex items-center justify-between">
+        <h2
+          className="text-[13px] font-semibold uppercase tracking-wider"
+          style={{ color: "#4F46E5" }}
+        >
+          Hoje
+        </h2>
+        <span className="text-[12px]" style={{ color: "#6B7280" }}>
+          {todayItems.length} {todayItems.length === 1 ? "item" : "itens"}
+        </span>
+      </div>
+      {isLoading ? (
+        <div className="py-6 text-center text-[13px]" style={{ color: "#B0B4BC" }}>
+          Carregando...
+        </div>
+      ) : todayItems.length === 0 ? (
+        <div
+          className="rounded-2xl border py-8 text-center text-[13px]"
+          style={{ borderColor: "#EDEDED", color: "#B0B4BC" }}
+        >
+          Nada marcado para hoje.
+        </div>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {todayItems.map((item) => (
+            <ItemCard
+              key={item.id}
+              item={item}
+              pending={isItemPending(item)}
+              onToggle={(i) => toggle.mutate(i)}
+            />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export function InboxList({
+  areaFilter,
+  emptyLabel = "Nenhum item ainda.",
+}: {
+  areaFilter?: AreaValue;
+  emptyLabel?: string;
+}) {
+  const [showConcluidos, setShowConcluidos] = useState(false);
+  const { data, isLoading } = useInboxItems(areaFilter);
+  const toggle = useToggle();
 
   const visible = useMemo(() => {
     if (!data) return [];
-    return showConcluidos ? data : data.filter((i) => !i.concluido);
+    return showConcluidos ? data : data.filter((i) => isItemPending(i));
   }, [data, showConcluidos]);
 
   return (
@@ -338,82 +687,12 @@ export function InboxList({
       ) : (
         <ul className="flex flex-col gap-2">
           {visible.map((item) => (
-            <li
+            <ItemCard
               key={item.id}
-              className="flex items-start gap-3 rounded-xl border bg-white px-4 py-3 transition-opacity"
-              style={{
-                borderColor: "#EDEDED",
-                opacity: item.concluido ? 0.5 : 1,
-              }}
-            >
-              <div className="pt-0.5">
-                <Checkbox
-                  checked={item.concluido}
-                  onCheckedChange={() => toggleMutation.mutate(item)}
-                />
-              </div>
-              <span
-                className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full"
-                style={{ backgroundColor: tipoDot(item.tipo) }}
-                aria-label={item.tipo}
-              />
-              <div className="min-w-0 flex-1">
-                <p
-                  className="whitespace-pre-wrap break-words text-[14px]"
-                  style={{
-                    color: "#111111",
-                    textDecoration: item.concluido ? "line-through" : "none",
-                  }}
-                >
-                  {item.texto}
-                </p>
-                <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px]">
-                  <span
-                    className="rounded-full px-2 py-0.5 font-medium capitalize"
-                    style={{ backgroundColor: "#FAFAFA", color: "#6B7280" }}
-                  >
-                    {item.tipo}
-                  </span>
-                  <span
-                    className="rounded-full px-2 py-0.5 font-medium"
-                    style={{
-                      backgroundColor: "#EEF0FF",
-                      color: "#4F46E5",
-                    }}
-                  >
-                    {areaLabel(item.area)}
-                  </span>
-                  {item.lembrete_data_hora && (
-                    <span
-                      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium"
-                      style={
-                        item.lembrete_enviado
-                          ? {
-                              backgroundColor: "#F5F5F5",
-                              color: "#B0B4BC",
-                            }
-                          : {
-                              backgroundColor: "#FEF3C7",
-                              color: "#B45309",
-                            }
-                      }
-                      title={
-                        item.lembrete_enviado
-                          ? "Lembrete já notificado"
-                          : "Lembrete agendado"
-                      }
-                    >
-                      {item.lembrete_enviado ? (
-                        <Bell className="h-3 w-3" />
-                      ) : (
-                        <BellRing className="h-3 w-3" />
-                      )}
-                      {formatLembrete(item.lembrete_data_hora)}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </li>
+              item={item}
+              pending={isItemPending(item)}
+              onToggle={(i) => toggle.mutate(i)}
+            />
           ))}
         </ul>
       )}
