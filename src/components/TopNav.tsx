@@ -1,5 +1,7 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { TAB_AREAS } from "@/lib/areas";
+import { lockSite } from "@/lib/gate.functions";
 
 export function TopNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
