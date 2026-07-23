@@ -1,10 +1,17 @@
-import { useState, useMemo } from "react";
+import {
+  useState,
+  useMemo,
+  useEffect,
+  createContext,
+  useContext,
+  type ReactNode,
+} from "react";
 import {
   useQuery,
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { Bell, BellRing } from "lucide-react";
+import { Bell, BellRing, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ALL_AREA_OPTIONS, areaLabel, type AreaValue } from "@/lib/areas";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,6 +22,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+type InboxEditCtx = {
+  editing: InboxItem | null;
+  startEdit: (item: InboxItem) => void;
+  clear: () => void;
+};
+const InboxEditContext = createContext<InboxEditCtx | null>(null);
+
+export function InboxEditProvider({ children }: { children: ReactNode }) {
+  const [editing, setEditing] = useState<InboxItem | null>(null);
+  return (
+    <InboxEditContext.Provider
+      value={{
+        editing,
+        startEdit: (item) => {
+          setEditing(item);
+          if (typeof window !== "undefined") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+        },
+        clear: () => setEditing(null),
+      }}
+    >
+      {children}
+    </InboxEditContext.Provider>
+  );
+}
+
+function useInboxEdit(): InboxEditCtx | null {
+  return useContext(InboxEditContext);
+}
+
 
 type Tipo = "mensagem" | "ideia" | "tarefa";
 
