@@ -613,15 +613,18 @@ function ItemCard({
   onToggle: (item: InboxItem) => void;
   pending: boolean;
 }) {
+  const editCtx = useInboxEdit();
+  const canEdit = editCtx !== null;
+  const isEditingThis = editCtx?.editing?.id === item.id;
   return (
     <li
       className="flex items-start gap-3 rounded-xl border bg-white px-4 py-3 transition-opacity"
       style={{
-        borderColor: "#EDEDED",
+        borderColor: isEditingThis ? "#4F46E5" : "#EDEDED",
         opacity: pending ? 1 : 0.5,
       }}
     >
-      <div className="pt-0.5">
+      <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
         <Checkbox
           checked={!pending}
           onCheckedChange={() => onToggle(item)}
@@ -632,7 +635,24 @@ function ItemCard({
         style={{ backgroundColor: tipoDot(item.tipo) }}
         aria-label={item.tipo}
       />
-      <div className="min-w-0 flex-1">
+      <div
+        className="min-w-0 flex-1"
+        role={canEdit ? "button" : undefined}
+        tabIndex={canEdit ? 0 : undefined}
+        onClick={canEdit ? () => editCtx!.startEdit(item) : undefined}
+        onKeyDown={
+          canEdit
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  editCtx!.startEdit(item);
+                }
+              }
+            : undefined
+        }
+        style={canEdit ? { cursor: "pointer" } : undefined}
+      >
+
         <p
           className="whitespace-pre-wrap break-words text-[14px]"
           style={{
