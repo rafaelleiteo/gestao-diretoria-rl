@@ -13,10 +13,17 @@ export const Route = createFileRoute("/consultorio")({
   component: ConsultorioLayout,
 });
 
-const MENU = [
+type MenuItem = {
+  to: string;
+  label: string;
+  icon: typeof InboxIcon;
+  exact?: boolean;
+};
+
+const MENU: MenuItem[] = [
   { to: "/consultorio", label: "Visão Geral", icon: InboxIcon, exact: true },
   { to: "/consultorio/ficha-planejamento", label: "Ficha de Planejamento", icon: FileText },
-] as const;
+];
 
 function ConsultorioLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });

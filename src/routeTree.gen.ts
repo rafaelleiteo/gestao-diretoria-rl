@@ -9,9 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ConsultorioRouteImport } from './routes/consultorio'
 import { Route as AreaRouteImport } from './routes/$area'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ConsultorioIndexRouteImport } from './routes/consultorio.index'
+import { Route as ConsultorioFichaPlanejamentoRouteImport } from './routes/consultorio.ficha-planejamento'
 
+const ConsultorioRoute = ConsultorioRouteImport.update({
+  id: '/consultorio',
+  path: '/consultorio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AreaRoute = AreaRouteImport.update({
   id: '/$area',
   path: '/$area',
@@ -22,35 +30,73 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConsultorioIndexRoute = ConsultorioIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ConsultorioRoute,
+} as any)
+const ConsultorioFichaPlanejamentoRoute =
+  ConsultorioFichaPlanejamentoRouteImport.update({
+    id: '/ficha-planejamento',
+    path: '/ficha-planejamento',
+    getParentRoute: () => ConsultorioRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$area': typeof AreaRoute
+  '/consultorio': typeof ConsultorioRouteWithChildren
+  '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
+  '/consultorio/': typeof ConsultorioIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$area': typeof AreaRoute
+  '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
+  '/consultorio': typeof ConsultorioIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$area': typeof AreaRoute
+  '/consultorio': typeof ConsultorioRouteWithChildren
+  '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
+  '/consultorio/': typeof ConsultorioIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/$area'
+  fullPaths:
+    | '/'
+    | '/$area'
+    | '/consultorio'
+    | '/consultorio/ficha-planejamento'
+    | '/consultorio/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/$area'
-  id: '__root__' | '/' | '/$area'
+  to: '/' | '/$area' | '/consultorio/ficha-planejamento' | '/consultorio'
+  id:
+    | '__root__'
+    | '/'
+    | '/$area'
+    | '/consultorio'
+    | '/consultorio/ficha-planejamento'
+    | '/consultorio/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AreaRoute: typeof AreaRoute
+  ConsultorioRoute: typeof ConsultorioRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/consultorio': {
+      id: '/consultorio'
+      path: '/consultorio'
+      fullPath: '/consultorio'
+      preLoaderRoute: typeof ConsultorioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/$area': {
       id: '/$area'
       path: '/$area'
@@ -65,23 +111,42 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/consultorio/': {
+      id: '/consultorio/'
+      path: '/'
+      fullPath: '/consultorio/'
+      preLoaderRoute: typeof ConsultorioIndexRouteImport
+      parentRoute: typeof ConsultorioRoute
+    }
+    '/consultorio/ficha-planejamento': {
+      id: '/consultorio/ficha-planejamento'
+      path: '/ficha-planejamento'
+      fullPath: '/consultorio/ficha-planejamento'
+      preLoaderRoute: typeof ConsultorioFichaPlanejamentoRouteImport
+      parentRoute: typeof ConsultorioRoute
+    }
   }
 }
+
+interface ConsultorioRouteChildren {
+  ConsultorioFichaPlanejamentoRoute: typeof ConsultorioFichaPlanejamentoRoute
+  ConsultorioIndexRoute: typeof ConsultorioIndexRoute
+}
+
+const ConsultorioRouteChildren: ConsultorioRouteChildren = {
+  ConsultorioFichaPlanejamentoRoute: ConsultorioFichaPlanejamentoRoute,
+  ConsultorioIndexRoute: ConsultorioIndexRoute,
+}
+
+const ConsultorioRouteWithChildren = ConsultorioRoute._addFileChildren(
+  ConsultorioRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AreaRoute: AreaRoute,
+  ConsultorioRoute: ConsultorioRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
