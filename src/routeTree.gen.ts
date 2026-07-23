@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as GestaoRouteImport } from './routes/gestao'
 import { Route as ConsultorioRouteImport } from './routes/consultorio'
 import { Route as AreaRouteImport } from './routes/$area'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ConsultorioIndexRouteImport } from './routes/consultorio.index'
 import { Route as ConsultorioFichaPlanejamentoRouteImport } from './routes/consultorio.ficha-planejamento'
 
+const GestaoRoute = GestaoRouteImport.update({
+  id: '/gestao',
+  path: '/gestao',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConsultorioRoute = ConsultorioRouteImport.update({
   id: '/consultorio',
   path: '/consultorio',
@@ -46,12 +52,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$area': typeof AreaRoute
   '/consultorio': typeof ConsultorioRouteWithChildren
+  '/gestao': typeof GestaoRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/consultorio/': typeof ConsultorioIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$area': typeof AreaRoute
+  '/gestao': typeof GestaoRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/consultorio': typeof ConsultorioIndexRoute
 }
@@ -60,6 +68,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/$area': typeof AreaRoute
   '/consultorio': typeof ConsultorioRouteWithChildren
+  '/gestao': typeof GestaoRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/consultorio/': typeof ConsultorioIndexRoute
 }
@@ -69,15 +78,22 @@ export interface FileRouteTypes {
     | '/'
     | '/$area'
     | '/consultorio'
+    | '/gestao'
     | '/consultorio/ficha-planejamento'
     | '/consultorio/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/$area' | '/consultorio/ficha-planejamento' | '/consultorio'
+  to:
+    | '/'
+    | '/$area'
+    | '/gestao'
+    | '/consultorio/ficha-planejamento'
+    | '/consultorio'
   id:
     | '__root__'
     | '/'
     | '/$area'
     | '/consultorio'
+    | '/gestao'
     | '/consultorio/ficha-planejamento'
     | '/consultorio/'
   fileRoutesById: FileRoutesById
@@ -86,10 +102,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AreaRoute: typeof AreaRoute
   ConsultorioRoute: typeof ConsultorioRouteWithChildren
+  GestaoRoute: typeof GestaoRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/gestao': {
+      id: '/gestao'
+      path: '/gestao'
+      fullPath: '/gestao'
+      preLoaderRoute: typeof GestaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/consultorio': {
       id: '/consultorio'
       path: '/consultorio'
@@ -146,6 +170,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AreaRoute: AreaRoute,
   ConsultorioRoute: ConsultorioRouteWithChildren,
+  GestaoRoute: GestaoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
