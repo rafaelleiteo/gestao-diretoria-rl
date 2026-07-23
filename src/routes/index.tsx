@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { InboxEditProvider, InboxForm, InboxList, TodayList } from "@/components/Inbox";
+import { HomeSummary } from "@/components/InboxSummary";
 
 export const Route = createFileRoute("/")({
   head: () => ({
