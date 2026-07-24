@@ -22,6 +22,7 @@ import { Route as ConsultorioIndexRouteImport } from './routes/consultorio.index
 import { Route as GestaoTarefasRecorrentesRouteImport } from './routes/gestao.tarefas-recorrentes'
 import { Route as GestaoPromptsRouteImport } from './routes/gestao.prompts'
 import { Route as FinanceiroPagamentosRecorrentesRouteImport } from './routes/financeiro.pagamentos-recorrentes'
+import { Route as ConsultorioModelosDocumentosRouteImport } from './routes/consultorio.modelos-documentos'
 import { Route as ConsultorioFichaPlanejamentoRouteImport } from './routes/consultorio.ficha-planejamento'
 import { Route as ApiPublicHooksSendRemindersRouteImport } from './routes/api/public/hooks/send-reminders'
 
@@ -92,6 +93,12 @@ const FinanceiroPagamentosRecorrentesRoute =
     path: '/pagamentos-recorrentes',
     getParentRoute: () => FinanceiroRoute,
   } as any)
+const ConsultorioModelosDocumentosRoute =
+  ConsultorioModelosDocumentosRouteImport.update({
+    id: '/modelos-documentos',
+    path: '/modelos-documentos',
+    getParentRoute: () => ConsultorioRoute,
+  } as any)
 const ConsultorioFichaPlanejamentoRoute =
   ConsultorioFichaPlanejamentoRouteImport.update({
     id: '/ficha-planejamento',
@@ -114,6 +121,7 @@ export interface FileRoutesByFullPath {
   '/gestao': typeof GestaoRouteWithChildren
   '/unlock': typeof UnlockRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
+  '/consultorio/modelos-documentos': typeof ConsultorioModelosDocumentosRoute
   '/financeiro/pagamentos-recorrentes': typeof FinanceiroPagamentosRecorrentesRoute
   '/gestao/prompts': typeof GestaoPromptsRoute
   '/gestao/tarefas-recorrentes': typeof GestaoTarefasRecorrentesRoute
@@ -128,6 +136,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/unlock': typeof UnlockRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
+  '/consultorio/modelos-documentos': typeof ConsultorioModelosDocumentosRoute
   '/financeiro/pagamentos-recorrentes': typeof FinanceiroPagamentosRecorrentesRoute
   '/gestao/prompts': typeof GestaoPromptsRoute
   '/gestao/tarefas-recorrentes': typeof GestaoTarefasRecorrentesRoute
@@ -146,6 +155,7 @@ export interface FileRoutesById {
   '/gestao': typeof GestaoRouteWithChildren
   '/unlock': typeof UnlockRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
+  '/consultorio/modelos-documentos': typeof ConsultorioModelosDocumentosRoute
   '/financeiro/pagamentos-recorrentes': typeof FinanceiroPagamentosRecorrentesRoute
   '/gestao/prompts': typeof GestaoPromptsRoute
   '/gestao/tarefas-recorrentes': typeof GestaoTarefasRecorrentesRoute
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/gestao'
     | '/unlock'
     | '/consultorio/ficha-planejamento'
+    | '/consultorio/modelos-documentos'
     | '/financeiro/pagamentos-recorrentes'
     | '/gestao/prompts'
     | '/gestao/tarefas-recorrentes'
@@ -179,6 +190,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/unlock'
     | '/consultorio/ficha-planejamento'
+    | '/consultorio/modelos-documentos'
     | '/financeiro/pagamentos-recorrentes'
     | '/gestao/prompts'
     | '/gestao/tarefas-recorrentes'
@@ -196,6 +208,7 @@ export interface FileRouteTypes {
     | '/gestao'
     | '/unlock'
     | '/consultorio/ficha-planejamento'
+    | '/consultorio/modelos-documentos'
     | '/financeiro/pagamentos-recorrentes'
     | '/gestao/prompts'
     | '/gestao/tarefas-recorrentes'
@@ -309,6 +322,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FinanceiroPagamentosRecorrentesRouteImport
       parentRoute: typeof FinanceiroRoute
     }
+    '/consultorio/modelos-documentos': {
+      id: '/consultorio/modelos-documentos'
+      path: '/modelos-documentos'
+      fullPath: '/consultorio/modelos-documentos'
+      preLoaderRoute: typeof ConsultorioModelosDocumentosRouteImport
+      parentRoute: typeof ConsultorioRoute
+    }
     '/consultorio/ficha-planejamento': {
       id: '/consultorio/ficha-planejamento'
       path: '/ficha-planejamento'
@@ -328,11 +348,13 @@ declare module '@tanstack/react-router' {
 
 interface ConsultorioRouteChildren {
   ConsultorioFichaPlanejamentoRoute: typeof ConsultorioFichaPlanejamentoRoute
+  ConsultorioModelosDocumentosRoute: typeof ConsultorioModelosDocumentosRoute
   ConsultorioIndexRoute: typeof ConsultorioIndexRoute
 }
 
 const ConsultorioRouteChildren: ConsultorioRouteChildren = {
   ConsultorioFichaPlanejamentoRoute: ConsultorioFichaPlanejamentoRoute,
+  ConsultorioModelosDocumentosRoute: ConsultorioModelosDocumentosRoute,
   ConsultorioIndexRoute: ConsultorioIndexRoute,
 }
 
