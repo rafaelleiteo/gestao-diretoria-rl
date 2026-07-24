@@ -39,6 +39,10 @@ function ConsultorioIndex() {
           emptyLabel="Nenhum item marcado como Consultório ainda."
         />
       </div>
+
+      <div className="mt-10">
+        <TarefasRecorrentesModule areaFilter="consultorio" compact />
+      </div>
     </div>
   );
 }
