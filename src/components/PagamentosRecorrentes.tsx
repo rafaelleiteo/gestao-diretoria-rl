@@ -72,9 +72,13 @@ export function PagamentosRecorrentes() {
       const key = `${input.pagamento_id}:${input.mes}`;
       const existing = registroMap.get(key);
       if (existing) {
+        const patch =
+          input.field === "impresso"
+            ? { impresso: !existing.impresso, atualizado_em: new Date().toISOString() }
+            : { pago: !existing.pago, atualizado_em: new Date().toISOString() };
         const { error } = await supabase
           .from("pagamentos_recorrentes_registro")
-          .update({ [input.field]: !existing[input.field], atualizado_em: new Date().toISOString() })
+          .update(patch)
           .eq("id", existing.id);
         if (error) throw error;
       } else {
