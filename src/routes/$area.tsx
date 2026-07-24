@@ -66,6 +66,10 @@ function AreaPage() {
           emptyLabel={`Nenhum item marcado como ${area.label} ainda.`}
         />
       </div>
+
+      <div className="mt-10">
+        <TarefasRecorrentesModule areaFilter={slug} compact />
+      </div>
     </div>
   );
 }
