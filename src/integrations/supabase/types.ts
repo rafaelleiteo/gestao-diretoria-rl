@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      configuracao_documentos: {
+        Row: {
+          cabecalho_texto: string | null
+          criado_em: string
+          id: string
+          logo_url: string | null
+          mostrar_timbre: boolean
+          rodape_texto: string | null
+          usar_papel_timbrado: boolean
+        }
+        Insert: {
+          cabecalho_texto?: string | null
+          criado_em?: string
+          id?: string
+          logo_url?: string | null
+          mostrar_timbre?: boolean
+          rodape_texto?: string | null
+          usar_papel_timbrado?: boolean
+        }
+        Update: {
+          cabecalho_texto?: string | null
+          criado_em?: string
+          id?: string
+          logo_url?: string | null
+          mostrar_timbre?: boolean
+          rodape_texto?: string | null
+          usar_papel_timbrado?: boolean
+        }
+        Relationships: []
+      }
       documento_modelos: {
         Row: {
           ativo: boolean

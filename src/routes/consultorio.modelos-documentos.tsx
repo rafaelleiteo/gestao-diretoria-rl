@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { Copy, Check, Plus, X, ArrowLeft } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Copy, Check, Plus, X, ArrowLeft, Upload, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/consultorio/modelos-documentos")({
@@ -28,6 +28,15 @@ type Modelo = {
   criado_em: string;
 };
 
+type ConfigTimbre = {
+  id: string;
+  logo_url: string | null;
+  cabecalho_texto: string | null;
+  rodape_texto: string | null;
+  mostrar_timbre: boolean;
+  usar_papel_timbrado: boolean;
+};
+
 const TIPO_LABEL: Record<TipoDoc, string> = {
   encaminhamento: "Encaminhamento",
   atestado: "Atestado",
@@ -36,6 +45,9 @@ const TIPO_LABEL: Record<TipoDoc, string> = {
 };
 
 const TIPOS: TipoDoc[] = ["encaminhamento", "atestado", "declaracao", "receituario"];
+
+const TIMBRE_BUCKET = "documento-timbre";
+const SIGNED_URL_TTL = 60 * 60 * 24 * 365 * 10; // 10 anos
 
 function extractPlaceholders(text: string): string[] {
   const re = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
@@ -60,13 +72,61 @@ function renderTemplate(template: string, values: Record<string, string>): strin
   let result = template.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key: string) => {
     return values[key] ?? "";
   });
-  // Clean up spacing artifacts, especially from empty {{repouso}} before punctuation.
   result = result.replace(/[ \t]+([.,;:!?])/g, "$1");
   result = result.replace(/[ \t]{2,}/g, " ");
   return result;
 }
 
+type Tab = "modelos" | "timbre";
+
 function ModelosDocumentosPage() {
+  const [tab, setTab] = useState<Tab>("modelos");
+
+  return (
+    <div>
+      <div className="mb-6 flex gap-1 rounded-full border bg-white p-1 w-fit" style={{ borderColor: "#EDEDED" }}>
+        <TabButton active={tab === "modelos"} onClick={() => setTab("modelos")}>
+          Modelos
+        </TabButton>
+        <TabButton active={tab === "timbre"} onClick={() => setTab("timbre")}>
+          Configuração do timbre
+        </TabButton>
+      </div>
+
+      {tab === "modelos" ? <ModelosTab /> : <TimbreTab />}
+    </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors"
+      style={
+        active
+          ? { backgroundColor: "#4F46E5", color: "#FFFFFF" }
+          : { backgroundColor: "transparent", color: "#6B7280" }
+      }
+    >
+      {children}
+    </button>
+  );
+}
+
+// ============================================================
+// MODELOS TAB
+// ============================================================
+
+function ModelosTab() {
   const qc = useQueryClient();
   const [selected, setSelected] = useState<Modelo | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -246,6 +306,56 @@ function ModeloCard({ modelo, onUse }: { modelo: Modelo; onUse: () => void }) {
   );
 }
 
+// ============================================================
+// CONFIG HOOK
+// ============================================================
+
+function useConfigTimbre() {
+  return useQuery({
+    queryKey: ["configuracao_documentos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("configuracao_documentos")
+        .select("*")
+        .order("criado_em", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as ConfigTimbre | null;
+    },
+  });
+}
+
+function useSignedLogoUrl(path: string | null | undefined) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (!path) {
+      setUrl(null);
+      return;
+    }
+    // If it already looks like a URL, use as-is
+    if (/^https?:\/\//i.test(path)) {
+      setUrl(path);
+      return;
+    }
+    supabase.storage
+      .from(TIMBRE_BUCKET)
+      .createSignedUrl(path, SIGNED_URL_TTL)
+      .then(({ data }) => {
+        if (!cancelled) setUrl(data?.signedUrl ?? null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [path]);
+  return url;
+}
+
+// ============================================================
+// USAR MODELO (integrated with timbre)
+// ============================================================
+
 function UsarModelo({ modelo, onBack }: { modelo: Modelo; onBack: () => void }) {
   const placeholders = useMemo(
     () => extractPlaceholders(modelo.conteudo),
@@ -257,10 +367,28 @@ function UsarModelo({ modelo, onBack }: { modelo: Modelo; onBack: () => void }) 
   const [freeText, setFreeText] = useState("");
   const [copied, setCopied] = useState(false);
 
-  const generated = useMemo(() => {
+  const { data: config } = useConfigTimbre();
+  const logoUrl = useSignedLogoUrl(config?.logo_url ?? null);
+
+  const bodyText = useMemo(() => {
     if (isFreeForm) return freeText;
     return renderTemplate(modelo.conteudo, values);
   }, [isFreeForm, freeText, modelo.conteudo, values]);
+
+  const showTimbre = !!config?.mostrar_timbre && !config?.usar_papel_timbrado;
+
+  const generated = useMemo(() => {
+    if (!showTimbre) return bodyText;
+    const parts: string[] = [];
+    if (config?.cabecalho_texto && config.cabecalho_texto.trim()) {
+      parts.push(config.cabecalho_texto.trim());
+    }
+    if (bodyText.trim()) parts.push(bodyText);
+    if (config?.rodape_texto && config.rodape_texto.trim()) {
+      parts.push(config.rodape_texto.trim());
+    }
+    return parts.join("\n\n");
+  }, [showTimbre, bodyText, config?.cabecalho_texto, config?.rodape_texto]);
 
   const handleCopy = async () => {
     try {
@@ -402,6 +530,13 @@ function UsarModelo({ modelo, onBack }: { modelo: Modelo; onBack: () => void }) 
                 )}
               </button>
             </div>
+
+            {showTimbre && logoUrl && (
+              <div className="mt-3 flex justify-center rounded-lg border p-3" style={{ borderColor: "#EDEDED", backgroundColor: "#FAFAFA" }}>
+                <img src={logoUrl} alt="Logo" className="max-h-20 object-contain" />
+              </div>
+            )}
+
             <div
               className="mt-3 min-h-[160px] rounded-lg border px-3 py-2.5 text-[14px] whitespace-pre-wrap break-words"
               style={{
@@ -416,9 +551,361 @@ function UsarModelo({ modelo, onBack }: { modelo: Modelo; onBack: () => void }) 
                 </span>
               )}
             </div>
+
+            {!showTimbre && (config?.usar_papel_timbrado || config) && (
+              <p className="mt-2 text-[11.5px]" style={{ color: "#6B7280" }}>
+                {config?.usar_papel_timbrado
+                  ? "Papel timbrado físico ativo — o texto sai limpo, sem cabeçalho/rodapé."
+                  : "Timbre digital desativado."}
+              </p>
+            )}
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+// ============================================================
+// TIMBRE TAB
+// ============================================================
+
+function TimbreTab() {
+  const qc = useQueryClient();
+  const { data: config, isLoading } = useConfigTimbre();
+
+  const [cabecalho, setCabecalho] = useState("");
+  const [rodape, setRodape] = useState("");
+  const [mostrarTimbre, setMostrarTimbre] = useState(true);
+  const [usarPapel, setUsarPapel] = useState(false);
+  const [logoPath, setLogoPath] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Hydrate local state when config arrives
+  useEffect(() => {
+    if (!config) return;
+    setCabecalho(config.cabecalho_texto ?? "");
+    setRodape(config.rodape_texto ?? "");
+    setMostrarTimbre(config.mostrar_timbre);
+    setUsarPapel(config.usar_papel_timbrado);
+    setLogoPath(config.logo_url);
+  }, [config?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const logoUrl = useSignedLogoUrl(logoPath);
+
+  const upsertMut = useMutation({
+    mutationFn: async (patch: Partial<ConfigTimbre>) => {
+      if (!config) {
+        const { error } = await supabase
+          .from("configuracao_documentos")
+          .insert({
+            cabecalho_texto: cabecalho || null,
+            rodape_texto: rodape || null,
+            mostrar_timbre: mostrarTimbre,
+            usar_papel_timbrado: usarPapel,
+            logo_url: logoPath,
+            ...patch,
+          });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("configuracao_documentos")
+          .update(patch)
+          .eq("id", config.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["configuracao_documentos"] });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    },
+    onError: (e: Error) => setError(e.message),
+  });
+
+  const handleToggleTimbre = (val: boolean) => {
+    setMostrarTimbre(val);
+    if (val) setUsarPapel(false);
+    upsertMut.mutate({
+      mostrar_timbre: val,
+      usar_papel_timbrado: val ? false : usarPapel,
+    });
+  };
+
+  const handleTogglePapel = (val: boolean) => {
+    setUsarPapel(val);
+    if (val) setMostrarTimbre(false);
+    upsertMut.mutate({
+      usar_papel_timbrado: val,
+      mostrar_timbre: val ? false : mostrarTimbre,
+    });
+  };
+
+  const handleSaveTexts = () => {
+    upsertMut.mutate({
+      cabecalho_texto: cabecalho.trim() ? cabecalho : null,
+      rodape_texto: rodape.trim() ? rodape : null,
+    });
+  };
+
+  const handleUpload = async (file: File) => {
+    setError(null);
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "png";
+      const path = `logo-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from(TIMBRE_BUCKET)
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+      // Delete old logo if any
+      if (logoPath && !/^https?:\/\//i.test(logoPath)) {
+        await supabase.storage.from(TIMBRE_BUCKET).remove([logoPath]);
+      }
+      setLogoPath(path);
+      upsertMut.mutate({ logo_url: path });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao enviar logo");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    setError(null);
+    try {
+      if (logoPath && !/^https?:\/\//i.test(logoPath)) {
+        await supabase.storage.from(TIMBRE_BUCKET).remove([logoPath]);
+      }
+      setLogoPath(null);
+      upsertMut.mutate({ logo_url: null });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao remover logo");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <p className="py-8 text-center text-[13px]" style={{ color: "#6B7280" }}>
+        Carregando...
+      </p>
+    );
+  }
+
+  return (
+    <div className="max-w-3xl">
+      <div>
+        <h1
+          className="text-2xl font-bold"
+          style={{ color: "#111111", letterSpacing: "-0.02em" }}
+        >
+          Configuração do timbre
+        </h1>
+        <p className="mt-1 text-[13px]" style={{ color: "#6B7280" }}>
+          Defina logo, cabeçalho e rodapé usados no texto gerado dos documentos.
+        </p>
+      </div>
+
+      {error && (
+        <div
+          className="mt-4 rounded-lg border px-3 py-2 text-[13px]"
+          style={{ borderColor: "#FCA5A5", backgroundColor: "#FEF2F2", color: "#B91C1C" }}
+        >
+          {error}
+        </div>
+      )}
+
+      {/* Toggles */}
+      <div
+        className="mt-6 rounded-2xl border bg-white p-4"
+        style={{ borderColor: "#EDEDED" }}
+      >
+        <h2
+          className="text-[13px] font-semibold uppercase tracking-wider"
+          style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+        >
+          Modo de timbre
+        </h2>
+        <div className="mt-3 flex flex-col gap-3">
+          <ToggleRow
+            label="Exibir timbre digital"
+            description="Inclui cabeçalho e rodapé no texto copiado."
+            checked={mostrarTimbre}
+            onChange={handleToggleTimbre}
+          />
+          <ToggleRow
+            label="Tenho papel timbrado físico"
+            description="O texto é gerado limpo, sem cabeçalho/rodapé."
+            checked={usarPapel}
+            onChange={handleTogglePapel}
+          />
+        </div>
+      </div>
+
+      {/* Logo */}
+      <div
+        className="mt-6 rounded-2xl border bg-white p-4"
+        style={{ borderColor: "#EDEDED" }}
+      >
+        <h2
+          className="text-[13px] font-semibold uppercase tracking-wider"
+          style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+        >
+          Logo
+        </h2>
+
+        {logoUrl ? (
+          <div className="mt-3 flex items-center gap-4">
+            <div className="flex h-24 w-40 items-center justify-center rounded-lg border p-2" style={{ borderColor: "#EDEDED", backgroundColor: "#FAFAFA" }}>
+              <img src={logoUrl} alt="Logo" className="max-h-20 max-w-full object-contain" />
+            </div>
+            <div className="flex gap-2">
+              <label
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border bg-white px-3 py-1.5 text-[12px] font-medium"
+                style={{ borderColor: "#EDEDED", color: "#111111" }}
+              >
+                <Upload className="h-3.5 w-3.5" />
+                Trocar
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleUpload(f);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+              <button
+                onClick={handleRemoveLogo}
+                className="inline-flex items-center gap-1.5 rounded-full border bg-white px-3 py-1.5 text-[12px] font-medium"
+                style={{ borderColor: "#EDEDED", color: "#B91C1C" }}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Remover
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-3">
+            <label
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-medium text-white transition-opacity hover:opacity-90"
+              style={{ backgroundColor: "#4F46E5" }}
+            >
+              <Upload className="h-4 w-4" />
+              {uploading ? "Enviando..." : "Enviar logo"}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={uploading}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleUpload(f);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+          </div>
+        )}
+      </div>
+
+      {/* Textos */}
+      <div
+        className="mt-6 rounded-2xl border bg-white p-4"
+        style={{ borderColor: "#EDEDED" }}
+      >
+        <h2
+          className="text-[13px] font-semibold uppercase tracking-wider"
+          style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+        >
+          Textos
+        </h2>
+        <div className="mt-3 flex flex-col gap-4">
+          <div>
+            <label className="text-[12px] font-medium" style={{ color: "#111111" }}>
+              Texto do cabeçalho
+            </label>
+            <textarea
+              value={cabecalho}
+              onChange={(e) => setCabecalho(e.target.value)}
+              rows={4}
+              placeholder="Ex: Nome, CRO, endereço, telefone..."
+              className="mt-1 w-full resize-y rounded-lg border px-3 py-2 text-[14px] outline-none focus:border-[#4F46E5]"
+              style={{ borderColor: "#EDEDED", color: "#111111", backgroundColor: "#FAFAFA" }}
+            />
+          </div>
+          <div>
+            <label className="text-[12px] font-medium" style={{ color: "#111111" }}>
+              Texto do rodapé
+            </label>
+            <textarea
+              value={rodape}
+              onChange={(e) => setRodape(e.target.value)}
+              rows={4}
+              placeholder="Ex: Assinatura, contatos, redes sociais..."
+              className="mt-1 w-full resize-y rounded-lg border px-3 py-2 text-[14px] outline-none focus:border-[#4F46E5]"
+              style={{ borderColor: "#EDEDED", color: "#111111", backgroundColor: "#FAFAFA" }}
+            />
+          </div>
+          <div className="flex items-center justify-end gap-3">
+            {saved && (
+              <span className="text-[12px] font-medium" style={{ color: "#10B981" }}>
+                Salvo ✓
+              </span>
+            )}
+            <button
+              onClick={handleSaveTexts}
+              disabled={upsertMut.isPending}
+              className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ backgroundColor: "#4F46E5" }}
+            >
+              {upsertMut.isPending ? "Salvando..." : "Salvar textos"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ToggleRow({
+  label,
+  description,
+  checked,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start justify-between gap-4">
+      <div className="min-w-0 flex-1">
+        <div className="text-[14px] font-medium" style={{ color: "#111111" }}>
+          {label}
+        </div>
+        <div className="text-[12.5px]" style={{ color: "#6B7280" }}>
+          {description}
+        </div>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors"
+        style={{ backgroundColor: checked ? "#4F46E5" : "#E5E7EB" }}
+      >
+        <span
+          className="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform"
+          style={{ transform: checked ? "translateX(22px)" : "translateX(2px)" }}
+        />
+      </button>
+    </label>
   );
 }
