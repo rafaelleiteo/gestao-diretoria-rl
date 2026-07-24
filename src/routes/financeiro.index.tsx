@@ -1,0 +1,48 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { InboxList } from "@/components/Inbox";
+import { AreaSummary } from "@/components/InboxSummary";
+import { TarefasRecorrentesModule } from "@/components/TarefasRecorrentes";
+
+export const Route = createFileRoute("/financeiro/")({
+  component: FinanceiroIndex,
+});
+
+function FinanceiroIndex() {
+  return (
+    <div>
+      <div className="flex flex-col items-center justify-center py-10 text-center">
+        <h1
+          className="text-4xl font-bold"
+          style={{ color: "#111111", letterSpacing: "-0.02em" }}
+        >
+          Financeiro
+        </h1>
+        <p className="mt-3 text-[14px]" style={{ color: "#6B7280" }}>
+          Selecione uma ferramenta no menu à esquerda.
+        </p>
+      </div>
+
+      <AreaSummary area="financeiro" />
+
+      <div className="mt-6">
+        <h2
+          className="text-lg font-semibold"
+          style={{ color: "#111111", letterSpacing: "-0.01em" }}
+        >
+          Caixa de Entrada · Financeiro
+        </h2>
+        <p className="mt-1 text-[13px]" style={{ color: "#6B7280" }}>
+          Itens marcados como Financeiro.
+        </p>
+        <InboxList
+          areaFilter="financeiro"
+          emptyLabel="Nenhum item marcado como Financeiro ainda."
+        />
+      </div>
+
+      <div className="mt-10">
+        <TarefasRecorrentesModule areaFilter="financeiro" compact />
+      </div>
+    </div>
+  );
+}

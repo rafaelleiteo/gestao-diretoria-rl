@@ -56,6 +56,65 @@ export type Database = {
         }
         Relationships: []
       }
+      pagamentos_recorrentes: {
+        Row: {
+          criado_em: string
+          descricao: string
+          dia_mes: number
+          id: string
+        }
+        Insert: {
+          criado_em?: string
+          descricao: string
+          dia_mes: number
+          id?: string
+        }
+        Update: {
+          criado_em?: string
+          descricao?: string
+          dia_mes?: number
+          id?: string
+        }
+        Relationships: []
+      }
+      pagamentos_recorrentes_registro: {
+        Row: {
+          ano: number
+          atualizado_em: string
+          id: string
+          impresso: boolean
+          mes: number
+          pagamento_id: string
+          pago: boolean
+        }
+        Insert: {
+          ano: number
+          atualizado_em?: string
+          id?: string
+          impresso?: boolean
+          mes: number
+          pagamento_id: string
+          pago?: boolean
+        }
+        Update: {
+          ano?: number
+          atualizado_em?: string
+          id?: string
+          impresso?: boolean
+          mes?: number
+          pagamento_id?: string
+          pago?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagamentos_recorrentes_registro_pagamento_id_fkey"
+            columns: ["pagamento_id"]
+            isOneToOne: false
+            referencedRelation: "pagamentos_recorrentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prompts: {
         Row: {
           criado_em: string
