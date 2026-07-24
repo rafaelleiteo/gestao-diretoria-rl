@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnlockRouteImport } from './routes/unlock'
 import { Route as GestaoRouteImport } from './routes/gestao'
+import { Route as FinanceiroRouteImport } from './routes/financeiro'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConsultorioRouteImport } from './routes/consultorio'
 import { Route as AreaRouteImport } from './routes/$area'
@@ -30,6 +31,11 @@ const UnlockRoute = UnlockRouteImport.update({
 const GestaoRoute = GestaoRouteImport.update({
   id: '/gestao',
   path: '/gestao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanceiroRoute = FinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/$area': typeof AreaRoute
   '/consultorio': typeof ConsultorioRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/financeiro': typeof FinanceiroRoute
   '/gestao': typeof GestaoRouteWithChildren
   '/unlock': typeof UnlockRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
@@ -104,6 +111,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$area': typeof AreaRoute
   '/dashboard': typeof DashboardRoute
+  '/financeiro': typeof FinanceiroRoute
   '/unlock': typeof UnlockRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/gestao/prompts': typeof GestaoPromptsRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/$area': typeof AreaRoute
   '/consultorio': typeof ConsultorioRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/financeiro': typeof FinanceiroRoute
   '/gestao': typeof GestaoRouteWithChildren
   '/unlock': typeof UnlockRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
     | '/$area'
     | '/consultorio'
     | '/dashboard'
+    | '/financeiro'
     | '/gestao'
     | '/unlock'
     | '/consultorio/ficha-planejamento'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$area'
     | '/dashboard'
+    | '/financeiro'
     | '/unlock'
     | '/consultorio/ficha-planejamento'
     | '/gestao/prompts'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/$area'
     | '/consultorio'
     | '/dashboard'
+    | '/financeiro'
     | '/gestao'
     | '/unlock'
     | '/consultorio/ficha-planejamento'
@@ -175,6 +187,7 @@ export interface RootRouteChildren {
   AreaRoute: typeof AreaRoute
   ConsultorioRoute: typeof ConsultorioRouteWithChildren
   DashboardRoute: typeof DashboardRoute
+  FinanceiroRoute: typeof FinanceiroRoute
   GestaoRoute: typeof GestaoRouteWithChildren
   UnlockRoute: typeof UnlockRoute
   ApiPublicHooksSendRemindersRoute: typeof ApiPublicHooksSendRemindersRoute
@@ -194,6 +207,13 @@ declare module '@tanstack/react-router' {
       path: '/gestao'
       fullPath: '/gestao'
       preLoaderRoute: typeof GestaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/financeiro': {
+      id: '/financeiro'
+      path: '/financeiro'
+      fullPath: '/financeiro'
+      preLoaderRoute: typeof FinanceiroRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -303,6 +323,7 @@ const rootRouteChildren: RootRouteChildren = {
   AreaRoute: AreaRoute,
   ConsultorioRoute: ConsultorioRouteWithChildren,
   DashboardRoute: DashboardRoute,
+  FinanceiroRoute: FinanceiroRoute,
   GestaoRoute: GestaoRouteWithChildren,
   UnlockRoute: UnlockRoute,
   ApiPublicHooksSendRemindersRoute: ApiPublicHooksSendRemindersRoute,
