@@ -13,6 +13,7 @@ import {
 } from "@tanstack/react-query";
 import { Bell, BellRing, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { TarefaCard, useTarefasDueToday } from "@/components/TarefasRecorrentes";
 import { ALL_AREA_OPTIONS, areaLabel, type AreaValue } from "@/lib/areas";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -743,23 +744,34 @@ function useToggle() {
 export function TodayList() {
   const { data, isLoading } = useInboxItems();
   const toggle = useToggle();
+  const { items: tarefasHoje, isLoading: loadingTarefas } = useTarefasDueToday();
 
-  const todayItems = useMemo(() => {
-    if (!data) return [];
+  const { inboxHoje, recorrenciaSemanal } = useMemo(() => {
+    const inboxHoje: InboxItem[] = [];
+    const recorrenciaSemanal: InboxItem[] = [];
+    if (!data) return { inboxHoje, recorrenciaSemanal };
     const today = todayDia();
     const seen = new Set<string>();
-    const result: InboxItem[] = [];
     for (const item of data) {
-      const matchesHoje = item.prioridades?.includes("hoje");
-      const matchesDia =
-        item.dia_semana === today && isItemPending(item);
-      if ((matchesHoje || matchesDia) && !seen.has(item.id)) {
-        seen.add(item.id);
-        result.push(item);
+      if (item.prioridades?.includes("hoje")) {
+        if (!seen.has(item.id)) {
+          seen.add(item.id);
+          inboxHoje.push(item);
+        }
+        continue;
+      }
+      if (item.dia_semana === today && isItemPending(item)) {
+        if (!seen.has(item.id)) {
+          seen.add(item.id);
+          recorrenciaSemanal.push(item);
+        }
       }
     }
-    return result;
+    return { inboxHoje, recorrenciaSemanal };
   }, [data]);
+
+  const total = inboxHoje.length + recorrenciaSemanal.length + tarefasHoje.length;
+  const loading = isLoading || loadingTarefas;
 
   return (
     <div className="mt-6">
@@ -771,14 +783,14 @@ export function TodayList() {
           Hoje
         </h2>
         <span className="text-[12px]" style={{ color: "#6B7280" }}>
-          {todayItems.length} {todayItems.length === 1 ? "item" : "itens"}
+          {total} {total === 1 ? "item" : "itens"}
         </span>
       </div>
-      {isLoading ? (
+      {loading ? (
         <div className="py-6 text-center text-[13px]" style={{ color: "#B0B4BC" }}>
           Carregando...
         </div>
-      ) : todayItems.length === 0 ? (
+      ) : total === 0 ? (
         <div
           className="rounded-2xl border py-8 text-center text-[13px]"
           style={{ borderColor: "#EDEDED", color: "#B0B4BC" }}
@@ -786,16 +798,63 @@ export function TodayList() {
           Nada marcado para hoje.
         </div>
       ) : (
-        <ul className="flex flex-col gap-2">
-          {todayItems.map((item) => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              pending={isItemPending(item)}
-              onToggle={(i) => toggle.mutate(i)}
-            />
-          ))}
-        </ul>
+        <div className="flex flex-col gap-5">
+          {inboxHoje.length > 0 && (
+            <section>
+              <div
+                className="mb-2 text-[11px] font-semibold uppercase tracking-wider"
+                style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+              >
+                Caixa de Entrada
+              </div>
+              <ul className="flex flex-col gap-2">
+                {inboxHoje.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    pending={isItemPending(item)}
+                    onToggle={(i) => toggle.mutate(i)}
+                  />
+                ))}
+              </ul>
+            </section>
+          )}
+          {recorrenciaSemanal.length > 0 && (
+            <section>
+              <div
+                className="mb-2 text-[11px] font-semibold uppercase tracking-wider"
+                style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+              >
+                Recorrência semanal
+              </div>
+              <ul className="flex flex-col gap-2">
+                {recorrenciaSemanal.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    pending={isItemPending(item)}
+                    onToggle={(i) => toggle.mutate(i)}
+                  />
+                ))}
+              </ul>
+            </section>
+          )}
+          {tarefasHoje.length > 0 && (
+            <section>
+              <div
+                className="mb-2 text-[11px] font-semibold uppercase tracking-wider"
+                style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+              >
+                Tarefas recorrentes
+              </div>
+              <ul className="flex flex-col gap-2">
+                {tarefasHoje.map((t) => (
+                  <TarefaCard key={t.id} tarefa={t} />
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
       )}
     </div>
   );
