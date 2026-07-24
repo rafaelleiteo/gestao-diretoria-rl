@@ -80,6 +80,45 @@ export type Database = {
         }
         Relationships: []
       }
+      tarefas_recorrentes: {
+        Row: {
+          area: Database["public"]["Enums"]["inbox_area"]
+          criado_em: string
+          data_inicio: string | null
+          dia_mes: number | null
+          dia_semana: string | null
+          id: string
+          intervalo_meses: number | null
+          tipo_recorrencia: string
+          titulo: string
+          ultima_conclusao: string | null
+        }
+        Insert: {
+          area: Database["public"]["Enums"]["inbox_area"]
+          criado_em?: string
+          data_inicio?: string | null
+          dia_mes?: number | null
+          dia_semana?: string | null
+          id?: string
+          intervalo_meses?: number | null
+          tipo_recorrencia: string
+          titulo: string
+          ultima_conclusao?: string | null
+        }
+        Update: {
+          area?: Database["public"]["Enums"]["inbox_area"]
+          criado_em?: string
+          data_inicio?: string | null
+          dia_mes?: number | null
+          dia_semana?: string | null
+          id?: string
+          intervalo_meses?: number | null
+          tipo_recorrencia?: string
+          titulo?: string
+          ultima_conclusao?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
