@@ -17,6 +17,7 @@ import { Route as AreaRouteImport } from './routes/$area'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GestaoIndexRouteImport } from './routes/gestao.index'
 import { Route as ConsultorioIndexRouteImport } from './routes/consultorio.index'
+import { Route as GestaoTarefasRecorrentesRouteImport } from './routes/gestao.tarefas-recorrentes'
 import { Route as GestaoPromptsRouteImport } from './routes/gestao.prompts'
 import { Route as ConsultorioFichaPlanejamentoRouteImport } from './routes/consultorio.ficha-planejamento'
 import { Route as ApiPublicHooksSendRemindersRouteImport } from './routes/api/public/hooks/send-reminders'
@@ -61,6 +62,12 @@ const ConsultorioIndexRoute = ConsultorioIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ConsultorioRoute,
 } as any)
+const GestaoTarefasRecorrentesRoute =
+  GestaoTarefasRecorrentesRouteImport.update({
+    id: '/tarefas-recorrentes',
+    path: '/tarefas-recorrentes',
+    getParentRoute: () => GestaoRoute,
+  } as any)
 const GestaoPromptsRoute = GestaoPromptsRouteImport.update({
   id: '/prompts',
   path: '/prompts',
@@ -88,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/unlock': typeof UnlockRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/gestao/prompts': typeof GestaoPromptsRoute
+  '/gestao/tarefas-recorrentes': typeof GestaoTarefasRecorrentesRoute
   '/consultorio/': typeof ConsultorioIndexRoute
   '/gestao/': typeof GestaoIndexRoute
   '/api/public/hooks/send-reminders': typeof ApiPublicHooksSendRemindersRoute
@@ -99,6 +107,7 @@ export interface FileRoutesByTo {
   '/unlock': typeof UnlockRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/gestao/prompts': typeof GestaoPromptsRoute
+  '/gestao/tarefas-recorrentes': typeof GestaoTarefasRecorrentesRoute
   '/consultorio': typeof ConsultorioIndexRoute
   '/gestao': typeof GestaoIndexRoute
   '/api/public/hooks/send-reminders': typeof ApiPublicHooksSendRemindersRoute
@@ -113,6 +122,7 @@ export interface FileRoutesById {
   '/unlock': typeof UnlockRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/gestao/prompts': typeof GestaoPromptsRoute
+  '/gestao/tarefas-recorrentes': typeof GestaoTarefasRecorrentesRoute
   '/consultorio/': typeof ConsultorioIndexRoute
   '/gestao/': typeof GestaoIndexRoute
   '/api/public/hooks/send-reminders': typeof ApiPublicHooksSendRemindersRoute
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/unlock'
     | '/consultorio/ficha-planejamento'
     | '/gestao/prompts'
+    | '/gestao/tarefas-recorrentes'
     | '/consultorio/'
     | '/gestao/'
     | '/api/public/hooks/send-reminders'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/unlock'
     | '/consultorio/ficha-planejamento'
     | '/gestao/prompts'
+    | '/gestao/tarefas-recorrentes'
     | '/consultorio'
     | '/gestao'
     | '/api/public/hooks/send-reminders'
@@ -152,6 +164,7 @@ export interface FileRouteTypes {
     | '/unlock'
     | '/consultorio/ficha-planejamento'
     | '/gestao/prompts'
+    | '/gestao/tarefas-recorrentes'
     | '/consultorio/'
     | '/gestao/'
     | '/api/public/hooks/send-reminders'
@@ -225,6 +238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConsultorioIndexRouteImport
       parentRoute: typeof ConsultorioRoute
     }
+    '/gestao/tarefas-recorrentes': {
+      id: '/gestao/tarefas-recorrentes'
+      path: '/tarefas-recorrentes'
+      fullPath: '/gestao/tarefas-recorrentes'
+      preLoaderRoute: typeof GestaoTarefasRecorrentesRouteImport
+      parentRoute: typeof GestaoRoute
+    }
     '/gestao/prompts': {
       id: '/gestao/prompts'
       path: '/prompts'
@@ -265,11 +285,13 @@ const ConsultorioRouteWithChildren = ConsultorioRoute._addFileChildren(
 
 interface GestaoRouteChildren {
   GestaoPromptsRoute: typeof GestaoPromptsRoute
+  GestaoTarefasRecorrentesRoute: typeof GestaoTarefasRecorrentesRoute
   GestaoIndexRoute: typeof GestaoIndexRoute
 }
 
 const GestaoRouteChildren: GestaoRouteChildren = {
   GestaoPromptsRoute: GestaoPromptsRoute,
+  GestaoTarefasRecorrentesRoute: GestaoTarefasRecorrentesRoute,
   GestaoIndexRoute: GestaoIndexRoute,
 }
 

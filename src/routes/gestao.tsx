@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Repeat } from "lucide-react";
 
 export const Route = createFileRoute("/gestao")({
   head: () => ({
@@ -22,6 +22,7 @@ type MenuItem = {
 
 const MENU: MenuItem[] = [
   { to: "/gestao/prompts", label: "Prompts", icon: Sparkles },
+  { to: "/gestao/tarefas-recorrentes", label: "Tarefas Recorrentes", icon: Repeat },
 ];
 
 function GestaoLayout() {
