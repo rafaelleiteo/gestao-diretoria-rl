@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      documento_modelos: {
+        Row: {
+          ativo: boolean
+          conteudo: string
+          criado_em: string
+          id: string
+          nome: string
+          ordem: number
+          tipo: string
+        }
+        Insert: {
+          ativo?: boolean
+          conteudo?: string
+          criado_em?: string
+          id?: string
+          nome: string
+          ordem?: number
+          tipo: string
+        }
+        Update: {
+          ativo?: boolean
+          conteudo?: string
+          criado_em?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          tipo?: string
+        }
+        Relationships: []
+      }
       inbox_items: {
         Row: {
           area: Database["public"]["Enums"]["inbox_area"]
