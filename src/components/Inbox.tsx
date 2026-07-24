@@ -13,6 +13,7 @@ import {
 } from "@tanstack/react-query";
 import { Bell, BellRing, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { TarefaCard, useTarefasDueToday } from "@/components/TarefasRecorrentes";
 import { ALL_AREA_OPTIONS, areaLabel, type AreaValue } from "@/lib/areas";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
