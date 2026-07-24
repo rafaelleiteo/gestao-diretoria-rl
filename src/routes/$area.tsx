@@ -2,6 +2,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { TAB_AREAS, type TabArea } from "@/lib/areas";
 import { InboxList } from "@/components/Inbox";
 import { AreaSummary } from "@/components/InboxSummary";
+import { TarefasRecorrentesModule } from "@/components/TarefasRecorrentes";
 
 export const Route = createFileRoute("/$area")({
   loader: ({ params }) => {
