@@ -1037,12 +1037,16 @@ export function InboxList({
   includeFeedback = false,
   title,
   diaFilter,
+  categorias = [],
+  prioridades = [],
 }: {
   areaFilter?: AreaValue;
   emptyLabel?: string;
   includeFeedback?: boolean;
   title?: string;
   diaFilter?: DiaSemana | null;
+  categorias?: Categoria[];
+  prioridades?: Prioridade[];
 }) {
   const [showConcluidos, setShowConcluidos] = useState(false);
   const { data, isLoading } = useInboxItems(areaFilter);
@@ -1052,6 +1056,7 @@ export function InboxList({
     if (!data) return [];
     let base = includeFeedback ? data : data.filter((i) => !i.aguardando_feedback);
     if (diaFilter) base = base.filter((i) => i.dia_semana === diaFilter);
+    base = base.filter((i) => matchesFilters(i, categorias, prioridades));
     return showConcluidos ? base : base.filter((i) => isItemPending(i));
   }, [data, showConcluidos, includeFeedback, diaFilter]);
 
