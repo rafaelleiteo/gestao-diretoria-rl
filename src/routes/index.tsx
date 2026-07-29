@@ -5,9 +5,12 @@ import {
   InboxForm,
   InboxList,
   TodayList,
-  FeedbackList,
   DIA_FILTER_OPTIONS,
+  CATEGORIA_OPTIONS,
+  PRIORIDADE_FILTER_OPTIONS,
   type DiaSemana,
+  type Categoria,
+  type Prioridade,
 } from "@/components/Inbox";
 import { HomeSummary } from "@/components/InboxSummary";
 import { HomeFilterSidebarLayout, type FilterItem } from "@/components/HomeFilterSidebar";
@@ -24,17 +27,71 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-type Tab = "hoje" | "feedback" | "todos";
+type Tab = "hoje" | "todos";
 
 const TABS: { value: Tab; label: string }[] = [
   { value: "hoje", label: "Hoje" },
-  { value: "feedback", label: "Feedback" },
   { value: "todos", label: "Todos os itens" },
 ];
+
+function Pill({
+  label,
+  active,
+  onClick,
+  small,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  small?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full font-medium transition-colors hover:bg-[#FAFAFA] ${
+        small ? "px-3 py-1 text-[12px]" : "px-4 py-1.5 text-[13px]"
+      }`}
+      style={
+        active
+          ? { backgroundColor: "#4F46E5", color: "#FFFFFF" }
+          : {
+              backgroundColor: "transparent",
+              color: "#6B7280",
+              border: "1px solid #EDEDED",
+            }
+      }
+    >
+      {label}
+    </button>
+  );
+}
+
+function GroupLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider"
+      style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+    >
+      {children}
+    </div>
+  );
+}
 
 function Home() {
   const [tab, setTab] = useState<Tab>("hoje");
   const [dia, setDia] = useState<DiaSemana | null>(null);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [prioridades, setPrioridades] = useState<Prioridade[]>([]);
+
+  const toggleCategoria = (c: Categoria) =>
+    setCategorias((prev) =>
+      prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c],
+    );
+  const togglePrioridade = (p: Prioridade) =>
+    setPrioridades((prev) =>
+      prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p],
+    );
 
   const sidebarItems: FilterItem[] = [
     ...TABS.map((t) => ({
@@ -43,6 +100,17 @@ function Home() {
       active: tab === t.value,
       onSelect: () => setTab(t.value),
     })),
+    {
+      key: "atalho-feedback",
+      label: "Feedback",
+      active: tab === "todos" && categorias.includes("feedback"),
+      onSelect: () => {
+        setTab("todos");
+        setCategorias((prev) =>
+          prev.includes("feedback") ? prev : [...prev, "feedback"],
+        );
+      },
+    },
     ...(tab === "todos"
       ? DIA_FILTER_OPTIONS.map((d) => ({
           key: `dia-${d.value}`,
@@ -74,63 +142,74 @@ function Home() {
         <InboxForm />
 
         <div className="mt-6 flex flex-wrap items-center gap-1.5">
-          {TABS.map((t) => {
-            const active = tab === t.value;
-            return (
-              <button
-                key={t.value}
-                type="button"
-                onClick={() => setTab(t.value)}
-                className="rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors hover:bg-[#FAFAFA]"
-                style={
-                  active
-                    ? { backgroundColor: "#4F46E5", color: "#FFFFFF" }
-                    : {
-                        backgroundColor: "transparent",
-                        color: "#6B7280",
-                        border: "1px solid #EDEDED",
-                      }
-                }
-              >
-                {t.label}
-              </button>
-            );
-          })}
+          {TABS.map((t) => (
+            <Pill
+              key={t.value}
+              label={t.label}
+              active={tab === t.value}
+              onClick={() => setTab(t.value)}
+            />
+          ))}
         </div>
 
-        {tab === "todos" && (
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            {DIA_FILTER_OPTIONS.map((d) => {
-              const active = dia === d.value;
-              return (
-                <button
-                  key={d.value}
-                  type="button"
-                  onClick={() => setDia(active ? null : d.value)}
-                  className="rounded-full px-3 py-1 text-[12px] font-medium transition-colors hover:bg-[#FAFAFA]"
-                  style={
-                    active
-                      ? { backgroundColor: "#4F46E5", color: "#FFFFFF" }
-                      : {
-                          backgroundColor: "transparent",
-                          color: "#6B7280",
-                          border: "1px solid #EDEDED",
-                        }
-                  }
-                >
-                  {d.label}
-                </button>
-              );
-            })}
+        <div className="mt-4 flex flex-col gap-3">
+          <div>
+            <GroupLabel>Categoria</GroupLabel>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {CATEGORIA_OPTIONS.map((c) => (
+                <Pill
+                  key={c.value}
+                  small
+                  label={c.label}
+                  active={categorias.includes(c.value)}
+                  onClick={() => toggleCategoria(c.value)}
+                />
+              ))}
+            </div>
           </div>
-        )}
 
-        {tab === "hoje" && <TodayList />}
-        {tab === "feedback" && <FeedbackList />}
+          <div>
+            <GroupLabel>Prioridade</GroupLabel>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {PRIORIDADE_FILTER_OPTIONS.map((p) => (
+                <Pill
+                  key={p.value}
+                  small
+                  label={p.label}
+                  active={prioridades.includes(p.value)}
+                  onClick={() => togglePrioridade(p.value)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {tab === "todos" && (
+            <div>
+              <GroupLabel>Dia</GroupLabel>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {DIA_FILTER_OPTIONS.map((d) => (
+                  <Pill
+                    key={d.value}
+                    small
+                    label={d.label}
+                    active={dia === d.value}
+                    onClick={() => setDia(dia === d.value ? null : d.value)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {tab === "hoje" && (
+          <TodayList categorias={categorias} prioridades={prioridades} />
+        )}
         {tab === "todos" && (
           <InboxList
             includeFeedback
             diaFilter={dia}
+            categorias={categorias}
+            prioridades={prioridades}
             emptyLabel="Nenhum item ainda. Adicione o primeiro acima."
           />
         )}
