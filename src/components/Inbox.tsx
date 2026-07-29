@@ -264,6 +264,7 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
           prioridades: Prioridade[];
           dia_semana: DiaSemana | null;
           lembrete_data_hora: string | null;
+          aguardando_feedback: boolean;
           lembrete_enviado?: boolean;
         } = {
           texto: texto.trim(),
@@ -272,6 +273,7 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
           prioridades,
           dia_semana: diaSemana === "nenhum" ? null : diaSemana,
           lembrete_data_hora: lembreteIso,
+          aguardando_feedback: editing.concluido ? false : aguardandoFeedback,
         };
         // If the reminder date/time changed on an already-sent item,
         // reset lembrete_enviado so it fires again.
@@ -296,12 +298,14 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
         prioridades: Prioridade[];
         dia_semana?: DiaSemana | null;
         lembrete_data_hora?: string | null;
+        aguardando_feedback: boolean;
       } = {
         texto: texto.trim(),
         tipo: tipo as Tipo,
         area: area as AreaValue,
         prioridades,
         dia_semana: diaSemana === "nenhum" ? null : diaSemana,
+        aguardando_feedback: aguardandoFeedback,
       };
       if (lembreteIso) payload.lembrete_data_hora = lembreteIso;
       const { error } = await supabase.from("inbox_items").insert(payload as never);
