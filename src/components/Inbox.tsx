@@ -106,6 +106,10 @@ const DIA_OPTIONS: { value: DiaSemana; label: string }[] = [
   { value: "dom", label: "Dom" },
 ];
 
+// Dias selecionáveis no formulário / filtros (sem domingo).
+export const DIA_FILTER_OPTIONS: { value: DiaSemana; label: string }[] =
+  DIA_OPTIONS.filter((o) => o.value !== "dom");
+
 // Map JS Date.getDay() (0=dom..6=sab) to our DiaSemana values.
 const JS_DAY_TO_DIA: DiaSemana[] = [
   "dom",
@@ -480,7 +484,7 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="nenhum">Nenhum</SelectItem>
-                {DIA_OPTIONS.map((opt) => (
+                {DIA_FILTER_OPTIONS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
                   </SelectItem>
@@ -945,11 +949,13 @@ export function InboxList({
   emptyLabel = "Nenhum item ainda.",
   includeFeedback = false,
   title,
+  diaFilter,
 }: {
   areaFilter?: AreaValue;
   emptyLabel?: string;
   includeFeedback?: boolean;
   title?: string;
+  diaFilter?: DiaSemana | null;
 }) {
   const [showConcluidos, setShowConcluidos] = useState(false);
   const { data, isLoading } = useInboxItems(areaFilter);
@@ -957,9 +963,10 @@ export function InboxList({
 
   const visible = useMemo(() => {
     if (!data) return [];
-    const base = includeFeedback ? data : data.filter((i) => !i.aguardando_feedback);
+    let base = includeFeedback ? data : data.filter((i) => !i.aguardando_feedback);
+    if (diaFilter) base = base.filter((i) => i.dia_semana === diaFilter);
     return showConcluidos ? base : base.filter((i) => isItemPending(i));
-  }, [data, showConcluidos, includeFeedback]);
+  }, [data, showConcluidos, includeFeedback, diaFilter]);
 
   return (
     <div className="mt-6">
