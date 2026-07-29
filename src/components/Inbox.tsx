@@ -11,7 +11,7 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { Bell, BellRing, X } from "lucide-react";
+import { Bell, BellRing, Clock, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { TarefaCard, useTarefasDueToday } from "@/components/TarefasRecorrentes";
 import { ALL_AREA_OPTIONS, areaLabel, type AreaValue } from "@/lib/areas";
@@ -241,6 +241,8 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
       return next;
     });
   };
+
+  const feedbackDisabled = isEditing && !!editing?.concluido;
 
   const canSubmit =
     texto.trim().length > 0 &&
