@@ -573,8 +573,11 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
             style={{ borderColor: "#EDEDED", color: "#111111" }}
           />
         )}
+        </div>
+      </div>
 
-        <div className="ml-auto flex items-center gap-2">
+      <div className="mt-3 flex items-center justify-end gap-2">
+
           {isEditing && (
             <button
               type="button"
