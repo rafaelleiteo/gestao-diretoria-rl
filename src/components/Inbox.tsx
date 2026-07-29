@@ -691,10 +691,8 @@ function TestResumoDiarioButton() {
   };
 
   return (
-    <div className="mt-3 border-t pt-3" style={{ borderColor: "#EDEDED" }}>
-      <p className="mb-2 text-[12px]" style={{ color: "#6B7280" }}>
-        Resumo diário no Telegram — enviado todo dia às <strong style={{ color: "#111111" }}>07:00</strong> (horário de Brasília).
-      </p>
+    <div>
+
       <button
         type="button"
         onClick={run}
