@@ -106,6 +106,10 @@ const DIA_OPTIONS: { value: DiaSemana; label: string }[] = [
   { value: "dom", label: "Dom" },
 ];
 
+// Dias selecionáveis no formulário / filtros (sem domingo).
+export const DIA_FILTER_OPTIONS: { value: DiaSemana; label: string }[] =
+  DIA_OPTIONS.filter((o) => o.value !== "dom");
+
 // Map JS Date.getDay() (0=dom..6=sab) to our DiaSemana values.
 const JS_DAY_TO_DIA: DiaSemana[] = [
   "dom",
