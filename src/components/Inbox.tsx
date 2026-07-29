@@ -1058,7 +1058,7 @@ export function InboxList({
     if (diaFilter) base = base.filter((i) => i.dia_semana === diaFilter);
     base = base.filter((i) => matchesFilters(i, categorias, prioridades));
     return showConcluidos ? base : base.filter((i) => isItemPending(i));
-  }, [data, showConcluidos, includeFeedback, diaFilter]);
+  }, [data, showConcluidos, includeFeedback, diaFilter, categorias, prioridades]);
 
   return (
     <div className="mt-6">
