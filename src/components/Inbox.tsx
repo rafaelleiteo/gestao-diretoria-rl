@@ -189,6 +189,8 @@ function diaLabel(d: DiaSemana): string {
   return DIA_OPTIONS.find((o) => o.value === d)?.label ?? d;
 }
 
+const AREA_NONE = "__sem_area__";
+
 export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
   const qc = useQueryClient();
   const editCtx = useInboxEdit();
