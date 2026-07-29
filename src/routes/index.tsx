@@ -1,5 +1,12 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { InboxEditProvider, InboxForm, InboxList, TodayList } from "@/components/Inbox";
+import {
+  InboxEditProvider,
+  InboxForm,
+  InboxList,
+  TodayList,
+  FeedbackList,
+} from "@/components/Inbox";
 import { HomeSummary } from "@/components/InboxSummary";
 
 export const Route = createFileRoute("/")({
@@ -14,7 +21,17 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
+type Tab = "hoje" | "feedback" | "todos";
+
+const TABS: { value: Tab; label: string }[] = [
+  { value: "hoje", label: "Hoje" },
+  { value: "feedback", label: "Feedback" },
+  { value: "todos", label: "Todos os itens" },
+];
+
 function Home() {
+  const [tab, setTab] = useState<Tab>("hoje");
+
   return (
     <InboxEditProvider>
       <div className="mx-auto max-w-3xl px-6 py-10">
@@ -31,8 +48,41 @@ function Home() {
         </div>
 
         <InboxForm />
-        <TodayList />
-        <InboxList emptyLabel="Nenhum item ainda. Adicione o primeiro acima." />
+
+        <div className="mt-6 flex flex-wrap items-center gap-1.5">
+          {TABS.map((t) => {
+            const active = tab === t.value;
+            return (
+              <button
+                key={t.value}
+                type="button"
+                onClick={() => setTab(t.value)}
+                className="rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors hover:bg-[#FAFAFA]"
+                style={
+                  active
+                    ? { backgroundColor: "#4F46E5", color: "#FFFFFF" }
+                    : {
+                        backgroundColor: "transparent",
+                        color: "#6B7280",
+                        border: "1px solid #EDEDED",
+                      }
+                }
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {tab === "hoje" && <TodayList />}
+        {tab === "feedback" && <FeedbackList />}
+        {tab === "todos" && (
+          <InboxList
+            includeFeedback
+            emptyLabel="Nenhum item ainda. Adicione o primeiro acima."
+          />
+        )}
+
         <HomeSummary />
       </div>
     </InboxEditProvider>
