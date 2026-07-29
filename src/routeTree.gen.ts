@@ -25,6 +25,7 @@ import { Route as FinanceiroPagamentosRecorrentesRouteImport } from './routes/fi
 import { Route as ConsultorioModelosDocumentosRouteImport } from './routes/consultorio.modelos-documentos'
 import { Route as ConsultorioFichaPlanejamentoRouteImport } from './routes/consultorio.ficha-planejamento'
 import { Route as ApiPublicHooksSendRemindersRouteImport } from './routes/api/public/hooks/send-reminders'
+import { Route as ApiPublicHooksResumoDiarioTarefasRouteImport } from './routes/api/public/hooks/resumo-diario-tarefas'
 
 const UnlockRoute = UnlockRouteImport.update({
   id: '/unlock',
@@ -111,6 +112,12 @@ const ApiPublicHooksSendRemindersRoute =
     path: '/api/public/hooks/send-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksResumoDiarioTarefasRoute =
+  ApiPublicHooksResumoDiarioTarefasRouteImport.update({
+    id: '/api/public/hooks/resumo-diario-tarefas',
+    path: '/api/public/hooks/resumo-diario-tarefas',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -128,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/consultorio/': typeof ConsultorioIndexRoute
   '/financeiro/': typeof FinanceiroIndexRoute
   '/gestao/': typeof GestaoIndexRoute
+  '/api/public/hooks/resumo-diario-tarefas': typeof ApiPublicHooksResumoDiarioTarefasRoute
   '/api/public/hooks/send-reminders': typeof ApiPublicHooksSendRemindersRoute
 }
 export interface FileRoutesByTo {
@@ -143,6 +151,7 @@ export interface FileRoutesByTo {
   '/consultorio': typeof ConsultorioIndexRoute
   '/financeiro': typeof FinanceiroIndexRoute
   '/gestao': typeof GestaoIndexRoute
+  '/api/public/hooks/resumo-diario-tarefas': typeof ApiPublicHooksResumoDiarioTarefasRoute
   '/api/public/hooks/send-reminders': typeof ApiPublicHooksSendRemindersRoute
 }
 export interface FileRoutesById {
@@ -162,6 +171,7 @@ export interface FileRoutesById {
   '/consultorio/': typeof ConsultorioIndexRoute
   '/financeiro/': typeof FinanceiroIndexRoute
   '/gestao/': typeof GestaoIndexRoute
+  '/api/public/hooks/resumo-diario-tarefas': typeof ApiPublicHooksResumoDiarioTarefasRoute
   '/api/public/hooks/send-reminders': typeof ApiPublicHooksSendRemindersRoute
 }
 export interface FileRouteTypes {
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/consultorio/'
     | '/financeiro/'
     | '/gestao/'
+    | '/api/public/hooks/resumo-diario-tarefas'
     | '/api/public/hooks/send-reminders'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -197,6 +208,7 @@ export interface FileRouteTypes {
     | '/consultorio'
     | '/financeiro'
     | '/gestao'
+    | '/api/public/hooks/resumo-diario-tarefas'
     | '/api/public/hooks/send-reminders'
   id:
     | '__root__'
@@ -215,6 +227,7 @@ export interface FileRouteTypes {
     | '/consultorio/'
     | '/financeiro/'
     | '/gestao/'
+    | '/api/public/hooks/resumo-diario-tarefas'
     | '/api/public/hooks/send-reminders'
   fileRoutesById: FileRoutesById
 }
@@ -226,6 +239,7 @@ export interface RootRouteChildren {
   FinanceiroRoute: typeof FinanceiroRouteWithChildren
   GestaoRoute: typeof GestaoRouteWithChildren
   UnlockRoute: typeof UnlockRoute
+  ApiPublicHooksResumoDiarioTarefasRoute: typeof ApiPublicHooksResumoDiarioTarefasRoute
   ApiPublicHooksSendRemindersRoute: typeof ApiPublicHooksSendRemindersRoute
 }
 
@@ -343,6 +357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSendRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/resumo-diario-tarefas': {
+      id: '/api/public/hooks/resumo-diario-tarefas'
+      path: '/api/public/hooks/resumo-diario-tarefas'
+      fullPath: '/api/public/hooks/resumo-diario-tarefas'
+      preLoaderRoute: typeof ApiPublicHooksResumoDiarioTarefasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -399,18 +420,10 @@ const rootRouteChildren: RootRouteChildren = {
   FinanceiroRoute: FinanceiroRouteWithChildren,
   GestaoRoute: GestaoRouteWithChildren,
   UnlockRoute: UnlockRoute,
+  ApiPublicHooksResumoDiarioTarefasRoute:
+    ApiPublicHooksResumoDiarioTarefasRoute,
   ApiPublicHooksSendRemindersRoute: ApiPublicHooksSendRemindersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
