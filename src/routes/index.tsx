@@ -216,9 +216,8 @@ function Home() {
             emptyLabel="Nenhum item ainda. Adicione o primeiro acima."
           />
         )}
-
-        <HomeSummary />
       </div>
+
       </HomeFilterSidebarLayout>
     </InboxEditProvider>
 
