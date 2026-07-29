@@ -599,6 +599,16 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
 
       </div>
 
+      {formError && (
+        <div
+          className="mt-3 rounded-xl border px-3 py-2 text-[13px]"
+          style={{ borderColor: "#FCA5A5", backgroundColor: "#FEF2F2", color: "#B91C1C" }}
+        >
+          {formError}
+        </div>
+      )}
+
+
       <TestReminderButton />
     </div>
   );
