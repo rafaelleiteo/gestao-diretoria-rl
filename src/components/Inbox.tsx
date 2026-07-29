@@ -216,6 +216,7 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
         setLembreteOn(false);
         setLembreteLocal("");
       }
+      setAguardandoFeedback(editing.aguardando_feedback ?? false);
       setPrioridadeError(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -229,6 +230,7 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
     setDiaSemana("nenhum");
     setLembreteOn(false);
     setLembreteLocal("");
+    setAguardandoFeedback(false);
     setPrioridadeError(false);
   };
 
