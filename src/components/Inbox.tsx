@@ -606,8 +606,6 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
           </button>
         </div>
 
-      </div>
-
       {formError && (
         <div
           className="mt-3 rounded-xl border px-3 py-2 text-[13px]"
@@ -617,9 +615,18 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
         </div>
       )}
 
+      <div
+        className="mt-4 flex flex-col gap-3 border-t pt-3 md:flex-row md:items-start"
+        style={{ borderColor: "#EDEDED" }}
+      >
+        <div className="md:flex-1">
+          <TestReminderButton />
+        </div>
+        <div className="md:flex-1">
+          <TestResumoDiarioButton />
+        </div>
+      </div>
 
-      <TestReminderButton />
-      <TestResumoDiarioButton />
     </div>
   );
 }
