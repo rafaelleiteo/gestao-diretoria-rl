@@ -76,6 +76,7 @@ export type Database = {
       }
       inbox_items: {
         Row: {
+          aguardando_feedback: boolean
           area: Database["public"]["Enums"]["inbox_area"]
           concluido: boolean
           concluido_em: string | null
@@ -89,6 +90,7 @@ export type Database = {
           tipo: Database["public"]["Enums"]["inbox_tipo"]
         }
         Insert: {
+          aguardando_feedback?: boolean
           area: Database["public"]["Enums"]["inbox_area"]
           concluido?: boolean
           concluido_em?: string | null
@@ -102,6 +104,7 @@ export type Database = {
           tipo: Database["public"]["Enums"]["inbox_tipo"]
         }
         Update: {
+          aguardando_feedback?: boolean
           area?: Database["public"]["Enums"]["inbox_area"]
           concluido?: boolean
           concluido_em?: string | null
