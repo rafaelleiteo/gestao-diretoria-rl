@@ -221,10 +221,10 @@ async function runResumoDiario() {
   const tarefasList = (tarefas ?? []) as TarefaRow[];
 
   const grupo1 = items.filter(
-    (i) => !i.aguardando_feedback && !i.concluido && (i.prioridades ?? []).includes("hoje"),
+    (i) => !i.concluido && (i.prioridades ?? []).includes("hoje"),
   );
   const grupo2 = items.filter(
-    (i) => !i.aguardando_feedback && i.dia_semana === ctx.dia && isInboxPending(i, ctx),
+    (i) => i.dia_semana === ctx.dia && isInboxPending(i, ctx),
   );
 
   const dayStart = tzMidnightUtc(ctx.y, ctx.m - 1, ctx.d);

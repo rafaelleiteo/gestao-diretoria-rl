@@ -872,7 +872,46 @@ function useToggle() {
   });
 }
 
-export function TodayList() {
+export type Categoria = Tipo | "feedback";
+
+export const CATEGORIA_OPTIONS: { value: Categoria; label: string }[] = [
+  { value: "mensagem", label: "Mensagem" },
+  { value: "ideia", label: "Ideia" },
+  { value: "tarefa", label: "Tarefa" },
+  { value: "feedback", label: "Feedback" },
+];
+
+export const PRIORIDADE_FILTER_OPTIONS: { value: Prioridade; label: string }[] = [
+  { value: "urgente", label: "Urgente" },
+  { value: "importante", label: "Importante" },
+  { value: "hoje", label: "Hoje" },
+  { value: "longo_prazo", label: "Longo prazo" },
+  { value: "indiferente", label: "Indiferente" },
+];
+
+export function matchesFilters(
+  item: InboxItem,
+  categorias: Categoria[],
+  prioridades: Prioridade[],
+): boolean {
+  const tipos = categorias.filter((c) => c !== "feedback") as Tipo[];
+  if (tipos.length > 0 && !tipos.includes(item.tipo)) return false;
+  if (categorias.includes("feedback") && !item.aguardando_feedback) return false;
+  if (
+    prioridades.length > 0 &&
+    !(item.prioridades ?? []).some((p) => prioridades.includes(p))
+  )
+    return false;
+  return true;
+}
+
+export function TodayList({
+  categorias = [],
+  prioridades = [],
+}: {
+  categorias?: Categoria[];
+  prioridades?: Prioridade[];
+}) {
   const { data, isLoading } = useInboxItems();
   const toggle = useToggle();
   const { items: tarefasHoje, isLoading: loadingTarefas } = useTarefasDueToday();
@@ -884,7 +923,7 @@ export function TodayList() {
     const today = todayDia();
     const seen = new Set<string>();
     for (const item of data) {
-      if (item.aguardando_feedback) continue;
+      if (!matchesFilters(item, categorias, prioridades)) continue;
       if (item.prioridades?.includes("hoje")) {
         if (!seen.has(item.id)) {
           seen.add(item.id);
@@ -900,7 +939,7 @@ export function TodayList() {
       }
     }
     return { inboxHoje, recorrenciaSemanal };
-  }, [data]);
+  }, [data, categorias, prioridades]);
 
   const total = inboxHoje.length + recorrenciaSemanal.length + tarefasHoje.length;
   const loading = isLoading || loadingTarefas;
@@ -998,12 +1037,16 @@ export function InboxList({
   includeFeedback = false,
   title,
   diaFilter,
+  categorias = [],
+  prioridades = [],
 }: {
   areaFilter?: AreaValue;
   emptyLabel?: string;
   includeFeedback?: boolean;
   title?: string;
   diaFilter?: DiaSemana | null;
+  categorias?: Categoria[];
+  prioridades?: Prioridade[];
 }) {
   const [showConcluidos, setShowConcluidos] = useState(false);
   const { data, isLoading } = useInboxItems(areaFilter);
@@ -1013,8 +1056,9 @@ export function InboxList({
     if (!data) return [];
     let base = includeFeedback ? data : data.filter((i) => !i.aguardando_feedback);
     if (diaFilter) base = base.filter((i) => i.dia_semana === diaFilter);
+    base = base.filter((i) => matchesFilters(i, categorias, prioridades));
     return showConcluidos ? base : base.filter((i) => isItemPending(i));
-  }, [data, showConcluidos, includeFeedback, diaFilter]);
+  }, [data, showConcluidos, includeFeedback, diaFilter, categorias, prioridades]);
 
   return (
     <div className="mt-6">
