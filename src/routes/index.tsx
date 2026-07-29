@@ -136,6 +136,8 @@ function Home() {
 
         <HomeSummary />
       </div>
+      </HomeFilterSidebarLayout>
     </InboxEditProvider>
+
   );
 }
