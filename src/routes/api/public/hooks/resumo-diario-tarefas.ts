@@ -242,7 +242,10 @@ async function runResumoDiario() {
     return new Date(t.ultima_conclusao) < tzMidnightUtc(occ.getUTCFullYear(), occ.getUTCMonth(), occ.getUTCDate());
   });
 
-  const feedback = items.filter((i) => i.aguardando_feedback && !i.concluido);
+  const hojeIds = new Set<string>([...grupo1, ...grupo2, ...grupo4].map((i) => i.id));
+  const feedback = items.filter(
+    (i) => i.aguardando_feedback && !i.concluido && !hojeIds.has(i.id),
+  );
 
   diagnostics.counts = {
     prioridade_hoje: grupo1.length,
@@ -263,7 +266,8 @@ async function runResumoDiario() {
       if (seen.has(i.id)) continue;
       seen.add(i.id);
       const area = AREA_LABELS[i.area] ?? i.area;
-      bullets.push(`• ${escapeMd(i.texto)}${area ? ` (${escapeMd(area)})` : ""}`);
+      const tag = i.aguardando_feedback ? " 🕐 Feedback" : "";
+      bullets.push(`• ${escapeMd(i.texto)}${tag}${area ? ` (${escapeMd(area)})` : ""}`);
     }
   };
   pushInbox(grupo1);
@@ -290,6 +294,7 @@ async function runResumoDiario() {
       lines.push(`• ${escapeMd(i.texto)}${area ? ` (${escapeMd(area)})` : ""}`);
     }
   }
+
   const message = lines.join("\n");
   diagnostics.message = message;
 
