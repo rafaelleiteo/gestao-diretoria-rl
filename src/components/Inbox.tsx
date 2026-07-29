@@ -234,6 +234,7 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
     setLembreteLocal("");
     setAguardandoFeedback(false);
     setPrioridadeError(false);
+    setFormError(null);
   };
 
   const togglePrioridade = (p: Prioridade) => {
@@ -246,12 +247,6 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
 
   const feedbackDisabled = isEditing && !!editing?.concluido;
 
-  const canSubmit =
-    texto.trim().length > 0 &&
-    tipo !== "" &&
-    area !== "" &&
-    prioridades.length > 0 &&
-    (!lembreteOn || lembreteLocal.length > 0);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
