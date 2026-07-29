@@ -1035,14 +1035,16 @@ export function FeedbackList() {
           Nenhum item aguardando feedback.
         </div>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <div className="flex flex-col gap-4">
           {items.map((item) => (
-            <li key={item.id} className="flex flex-col gap-2">
-              <ItemCard
-                item={item}
-                pending={isItemPending(item)}
-                onToggle={(i) => concluir.mutate(i)}
-              />
+            <div key={item.id} className="flex flex-col gap-2">
+              <ul>
+                <ItemCard
+                  item={item}
+                  pending={isItemPending(item)}
+                  onToggle={(i) => concluir.mutate(i)}
+                />
+              </ul>
               <div className="flex justify-end">
                 <button
                   type="button"
@@ -1054,9 +1056,9 @@ export function FeedbackList() {
                   Marcar como concluído
                 </button>
               </div>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );
