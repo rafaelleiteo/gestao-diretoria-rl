@@ -730,6 +730,16 @@ function ItemCard({
               </span>
             );
           })}
+          {item.aguardando_feedback && (
+            <span
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium"
+              style={{ backgroundColor: "#EEF0FF", color: "#4F46E5" }}
+              title="Aguardando feedback"
+            >
+              <Clock className="h-3 w-3" />
+              Aguardando feedback
+            </span>
+          )}
           {item.dia_semana && (
             <span
               className="rounded-full px-2 py-0.5 font-medium"
@@ -795,6 +805,7 @@ export function TodayList() {
     const today = todayDia();
     const seen = new Set<string>();
     for (const item of data) {
+      if (item.aguardando_feedback) continue;
       if (item.prioridades?.includes("hoje")) {
         if (!seen.has(item.id)) {
           seen.add(item.id);
@@ -905,9 +916,13 @@ export function TodayList() {
 export function InboxList({
   areaFilter,
   emptyLabel = "Nenhum item ainda.",
+  includeFeedback = false,
+  title,
 }: {
   areaFilter?: AreaValue;
   emptyLabel?: string;
+  includeFeedback?: boolean;
+  title?: string;
 }) {
   const [showConcluidos, setShowConcluidos] = useState(false);
   const { data, isLoading } = useInboxItems(areaFilter);
@@ -915,8 +930,9 @@ export function InboxList({
 
   const visible = useMemo(() => {
     if (!data) return [];
-    return showConcluidos ? data : data.filter((i) => isItemPending(i));
-  }, [data, showConcluidos]);
+    const base = includeFeedback ? data : data.filter((i) => !i.aguardando_feedback);
+    return showConcluidos ? base : base.filter((i) => isItemPending(i));
+  }, [data, showConcluidos, includeFeedback]);
 
   return (
     <div className="mt-6">
@@ -925,7 +941,7 @@ export function InboxList({
           className="text-[13px] font-semibold uppercase tracking-wider"
           style={{ color: "#6B7280" }}
         >
-          {areaFilter ? "Itens desta área" : "Todos os itens"}
+          {title ?? (areaFilter ? "Itens desta área" : "Todos os itens")}
         </h2>
         <label
           className="flex cursor-pointer items-center gap-2 text-[12px]"
@@ -961,6 +977,84 @@ export function InboxList({
               pending={isItemPending(item)}
               onToggle={(i) => toggle.mutate(i)}
             />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export function FeedbackList() {
+  const { data, isLoading } = useInboxItems();
+  const qc = useQueryClient();
+
+  const concluir = useMutation({
+    mutationFn: async (item: InboxItem) => {
+      const { error } = await supabase
+        .from("inbox_items")
+        .update({ concluido: true, aguardando_feedback: false } as never)
+        .eq("id", item.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["inbox_items"] }),
+  });
+
+  const items = useMemo(() => {
+    if (!data) return [];
+    return data
+      .filter((i) => i.aguardando_feedback)
+      .sort(
+        (a, b) =>
+          new Date(a.criado_em).getTime() - new Date(b.criado_em).getTime(),
+      );
+  }, [data]);
+
+  return (
+    <div className="mt-6">
+      <div className="mb-3 flex items-center justify-between">
+        <h2
+          className="text-[13px] font-semibold uppercase tracking-wider"
+          style={{ color: "#4F46E5" }}
+        >
+          Aguardando feedback
+        </h2>
+        <span className="text-[12px]" style={{ color: "#6B7280" }}>
+          {items.length} {items.length === 1 ? "item" : "itens"}
+        </span>
+      </div>
+
+      {isLoading ? (
+        <div className="py-8 text-center text-[13px]" style={{ color: "#B0B4BC" }}>
+          Carregando...
+        </div>
+      ) : items.length === 0 ? (
+        <div
+          className="rounded-2xl border py-10 text-center text-[13px]"
+          style={{ borderColor: "#EDEDED", color: "#B0B4BC" }}
+        >
+          Nenhum item aguardando feedback.
+        </div>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {items.map((item) => (
+            <li key={item.id} className="flex flex-col gap-2">
+              <ItemCard
+                item={item}
+                pending={isItemPending(item)}
+                onToggle={(i) => concluir.mutate(i)}
+              />
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => concluir.mutate(item)}
+                  disabled={concluir.isPending}
+                  className="rounded-full px-4 py-1.5 text-[12px] font-semibold text-white disabled:opacity-40"
+                  style={{ backgroundColor: "#4F46E5" }}
+                >
+                  Marcar como concluído
+                </button>
+              </div>
+            </li>
           ))}
         </ul>
       )}
