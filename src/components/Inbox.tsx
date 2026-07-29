@@ -614,6 +614,7 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
 
 
       <TestReminderButton />
+      <TestResumoDiarioButton />
     </div>
   );
 }
@@ -658,6 +659,51 @@ function TestReminderButton() {
     </div>
   );
 }
+
+function TestResumoDiarioButton() {
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+
+  const run = async () => {
+    setLoading(true);
+    setResult(null);
+    try {
+      const resp = await fetch("/api/public/hooks/resumo-diario-tarefas", { method: "POST" });
+      const json = await resp.json();
+      setResult(JSON.stringify(json, null, 2));
+    } catch (e) {
+      setResult(`Erro: ${(e as Error).message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 border-t pt-3" style={{ borderColor: "#EDEDED" }}>
+      <p className="mb-2 text-[12px]" style={{ color: "#6B7280" }}>
+        Resumo diário no Telegram — enviado todo dia às <strong style={{ color: "#111111" }}>07:00</strong> (horário de Brasília).
+      </p>
+      <button
+        type="button"
+        onClick={run}
+        disabled={loading}
+        className="rounded-full border px-3 py-1 text-[12px] font-medium disabled:opacity-50"
+        style={{ borderColor: "#EDEDED", color: "#6B7280" }}
+      >
+        {loading ? "Enviando..." : "Testar envio do resumo agora"}
+      </button>
+      {result && (
+        <pre
+          className="mt-2 max-h-64 overflow-auto rounded-lg p-3 text-[11px]"
+          style={{ backgroundColor: "#FAFAFA", color: "#111111" }}
+        >
+          {result}
+        </pre>
+      )}
+    </div>
+  );
+}
+
 
 function useInboxItems(areaFilter?: AreaValue) {
   return useQuery({
