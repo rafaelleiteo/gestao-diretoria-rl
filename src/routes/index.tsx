@@ -6,6 +6,8 @@ import {
   InboxList,
   TodayList,
   FeedbackList,
+  DIA_FILTER_OPTIONS,
+  type DiaSemana,
 } from "@/components/Inbox";
 import { HomeSummary } from "@/components/InboxSummary";
 
@@ -31,6 +33,7 @@ const TABS: { value: Tab; label: string }[] = [
 
 function Home() {
   const [tab, setTab] = useState<Tab>("hoje");
+  const [dia, setDia] = useState<DiaSemana | null>(null);
 
   return (
     <InboxEditProvider>
@@ -74,11 +77,39 @@ function Home() {
           })}
         </div>
 
+        {tab === "todos" && (
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            {DIA_FILTER_OPTIONS.map((d) => {
+              const active = dia === d.value;
+              return (
+                <button
+                  key={d.value}
+                  type="button"
+                  onClick={() => setDia(active ? null : d.value)}
+                  className="rounded-full px-3 py-1 text-[12px] font-medium transition-colors hover:bg-[#FAFAFA]"
+                  style={
+                    active
+                      ? { backgroundColor: "#4F46E5", color: "#FFFFFF" }
+                      : {
+                          backgroundColor: "transparent",
+                          color: "#6B7280",
+                          border: "1px solid #EDEDED",
+                        }
+                  }
+                >
+                  {d.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {tab === "hoje" && <TodayList />}
         {tab === "feedback" && <FeedbackList />}
         {tab === "todos" && (
           <InboxList
             includeFeedback
+            diaFilter={dia}
             emptyLabel="Nenhum item ainda. Adicione o primeiro acima."
           />
         )}
