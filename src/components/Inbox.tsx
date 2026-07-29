@@ -316,18 +316,38 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
     onSuccess: () => {
       resetForm();
       editCtx?.clear();
+      setFormError(null);
       qc.invalidateQueries({ queryKey: ["inbox_items"] });
+    },
+    onError: (err: unknown) => {
+      const msg =
+        err && typeof err === "object" && "message" in err
+          ? String((err as { message?: string }).message)
+          : "Erro desconhecido ao salvar.";
+      console.error("[Inbox] falha ao salvar item:", err);
+      setFormError(msg);
     },
   });
 
   const handleSubmit = () => {
+    setFormError(null);
+    const faltando: string[] = [];
+    if (texto.trim().length === 0) faltando.push("texto");
+    if (tipo === "") faltando.push("tipo");
+    if (area === "") faltando.push("área");
     if (prioridades.length === 0) {
       setPrioridadeError(true);
+      faltando.push("prioridade");
+    }
+    if (lembreteOn && !lembreteLocal) faltando.push("data/hora do lembrete");
+    if (faltando.length > 0) {
+      setFormError(`Preencha: ${faltando.join(", ")}.`);
       return;
     }
-    if (!canSubmit) return;
+    if (saveMutation.isPending) return;
     saveMutation.mutate();
   };
+
 
   const handleCancelEdit = () => {
     resetForm();
