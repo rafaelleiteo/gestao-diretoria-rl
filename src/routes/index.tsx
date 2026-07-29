@@ -35,9 +35,28 @@ function Home() {
   const [tab, setTab] = useState<Tab>("hoje");
   const [dia, setDia] = useState<DiaSemana | null>(null);
 
+  const sidebarItems: FilterItem[] = [
+    ...TABS.map((t) => ({
+      key: t.value,
+      label: t.label,
+      active: tab === t.value,
+      onSelect: () => setTab(t.value),
+    })),
+    ...(tab === "todos"
+      ? DIA_FILTER_OPTIONS.map((d) => ({
+          key: `dia-${d.value}`,
+          label: d.label,
+          sub: true,
+          active: dia === d.value,
+          onSelect: () => setDia(dia === d.value ? null : d.value),
+        }))
+      : []),
+  ];
+
   return (
     <InboxEditProvider>
-      <div className="mx-auto max-w-3xl px-6 py-10">
+      <HomeFilterSidebarLayout title="Filtros" items={sidebarItems}>
+      <div className="mx-auto max-w-3xl">
         <div className="mb-8">
           <h1
             className="text-3xl font-bold"
@@ -49,6 +68,7 @@ function Home() {
             Registre rapidamente qualquer mensagem, ideia ou tarefa e marque a qual área ela pertence.
           </p>
         </div>
+
 
         <InboxForm />
 
