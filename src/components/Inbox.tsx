@@ -198,6 +198,7 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
   const [diaSemana, setDiaSemana] = useState<DiaSemana | "nenhum">("nenhum");
   const [lembreteOn, setLembreteOn] = useState(false);
   const [lembreteLocal, setLembreteLocal] = useState<string>("");
+  const [aguardandoFeedback, setAguardandoFeedback] = useState(false);
   const [prioridadeError, setPrioridadeError] = useState(false);
 
   // Sync form with the item being edited (or reset when leaving edit mode).
