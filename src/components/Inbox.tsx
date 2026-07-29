@@ -475,6 +475,38 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
         </div>
       </div>
 
+      {/* Aguardando feedback */}
+      <div className="mt-4">
+        <button
+          type="button"
+          role="switch"
+          aria-checked={aguardandoFeedback}
+          disabled={feedbackDisabled}
+          onClick={() => setAguardandoFeedback((v) => !v)}
+          className="flex items-center gap-2 text-[13px] font-medium disabled:cursor-not-allowed disabled:opacity-40"
+          style={{ color: aguardandoFeedback ? "#4F46E5" : "#6B7280" }}
+        >
+          <span
+            className="relative inline-block h-5 w-9 rounded-full transition-colors"
+            style={{ backgroundColor: aguardandoFeedback ? "#4F46E5" : "#E5E7EB" }}
+          >
+            <span
+              className="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all"
+              style={{ left: aguardandoFeedback ? "18px" : "2px" }}
+            />
+          </span>
+          <Clock className="h-3.5 w-3.5" />
+          Aguardando feedback
+        </button>
+        <p className="mt-1.5 text-[11px]" style={{ color: "#B0B4BC" }}>
+          {feedbackDisabled
+            ? "Item já concluído — não é possível aguardar feedback."
+            : "Marque quando sua parte estiver feita, mas você ainda espera um retorno de alguém antes de concluir."}
+        </p>
+      </div>
+
+
+
       <div
         className="mt-4 flex flex-wrap items-center gap-3 border-t pt-3"
         style={{ borderColor: "#EDEDED" }}
