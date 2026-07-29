@@ -141,6 +141,8 @@ function Home() {
 
         <InboxForm />
 
+        <HomeSummary />
+
         <div className="mt-6 flex flex-wrap items-center gap-1.5">
           {TABS.map((t) => (
             <Pill
@@ -151,6 +153,7 @@ function Home() {
             />
           ))}
         </div>
+
 
         <div className="mt-4 flex flex-col gap-3">
           <div>
@@ -213,9 +216,8 @@ function Home() {
             emptyLabel="Nenhum item ainda. Adicione o primeiro acima."
           />
         )}
-
-        <HomeSummary />
       </div>
+
       </HomeFilterSidebarLayout>
     </InboxEditProvider>
 
