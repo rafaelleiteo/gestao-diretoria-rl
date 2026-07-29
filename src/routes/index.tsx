@@ -10,6 +10,7 @@ import {
   type DiaSemana,
 } from "@/components/Inbox";
 import { HomeSummary } from "@/components/InboxSummary";
+import { HomeFilterSidebarLayout, type FilterItem } from "@/components/HomeFilterSidebar";
 
 export const Route = createFileRoute("/")({
   head: () => ({
