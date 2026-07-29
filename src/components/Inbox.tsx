@@ -650,7 +650,7 @@ function TestReminderButton() {
   };
 
   return (
-    <div className="mt-4 border-t pt-3" style={{ borderColor: "#EDEDED" }}>
+    <div>
       <button
         type="button"
         onClick={run}
