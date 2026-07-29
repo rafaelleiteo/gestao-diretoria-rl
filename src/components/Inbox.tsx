@@ -200,6 +200,8 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
   const [lembreteLocal, setLembreteLocal] = useState<string>("");
   const [aguardandoFeedback, setAguardandoFeedback] = useState(false);
   const [prioridadeError, setPrioridadeError] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
 
   // Sync form with the item being edited (or reset when leaving edit mode).
   useEffect(() => {
@@ -232,6 +234,7 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
     setLembreteLocal("");
     setAguardandoFeedback(false);
     setPrioridadeError(false);
+    setFormError(null);
   };
 
   const togglePrioridade = (p: Prioridade) => {
@@ -244,12 +247,6 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
 
   const feedbackDisabled = isEditing && !!editing?.concluido;
 
-  const canSubmit =
-    texto.trim().length > 0 &&
-    tipo !== "" &&
-    area !== "" &&
-    prioridades.length > 0 &&
-    (!lembreteOn || lembreteLocal.length > 0);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -316,18 +313,38 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
     onSuccess: () => {
       resetForm();
       editCtx?.clear();
+      setFormError(null);
       qc.invalidateQueries({ queryKey: ["inbox_items"] });
+    },
+    onError: (err: unknown) => {
+      const msg =
+        err && typeof err === "object" && "message" in err
+          ? String((err as { message?: string }).message)
+          : "Erro desconhecido ao salvar.";
+      console.error("[Inbox] falha ao salvar item:", err);
+      setFormError(msg);
     },
   });
 
   const handleSubmit = () => {
+    setFormError(null);
+    const faltando: string[] = [];
+    if (texto.trim().length === 0) faltando.push("texto");
+    if (tipo === "") faltando.push("tipo");
+    if (area === "") faltando.push("área");
     if (prioridades.length === 0) {
       setPrioridadeError(true);
+      faltando.push("prioridade");
+    }
+    if (lembreteOn && !lembreteLocal) faltando.push("data/hora do lembrete");
+    if (faltando.length > 0) {
+      setFormError(`Preencha: ${faltando.join(", ")}.`);
       return;
     }
-    if (!canSubmit) return;
+    if (saveMutation.isPending) return;
     saveMutation.mutate();
   };
+
 
   const handleCancelEdit = () => {
     resetForm();
@@ -581,6 +598,16 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
         </div>
 
       </div>
+
+      {formError && (
+        <div
+          className="mt-3 rounded-xl border px-3 py-2 text-[13px]"
+          style={{ borderColor: "#FCA5A5", backgroundColor: "#FEF2F2", color: "#B91C1C" }}
+        >
+          {formError}
+        </div>
+      )}
+
 
       <TestReminderButton />
     </div>
