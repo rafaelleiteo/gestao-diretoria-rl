@@ -189,6 +189,8 @@ function diaLabel(d: DiaSemana): string {
   return DIA_OPTIONS.find((o) => o.value === d)?.label ?? d;
 }
 
+const AREA_NONE = "__sem_area__";
+
 export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
   const qc = useQueryClient();
   const editCtx = useInboxEdit();
@@ -412,8 +414,8 @@ export function InboxForm({ defaultArea }: { defaultArea?: AreaValue }) {
 
         <div className="min-w-[180px]">
           <Select
-            value={area || undefined}
-            onValueChange={(v) => setArea(v as AreaValue)}
+            value={area === "" ? AREA_NONE : area}
+            onValueChange={(v) => setArea(v === AREA_NONE ? "" : (v as AreaValue))}
             disabled={!!defaultArea}
           >
             <SelectTrigger className="h-9 rounded-full border-[#EDEDED] bg-[#FAFAFA] text-[13px]">
