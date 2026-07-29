@@ -79,6 +79,7 @@ export type InboxItem = {
   prioridades: Prioridade[];
   dia_semana: DiaSemana | null;
   concluido_em: string | null;
+  aguardando_feedback: boolean;
 };
 
 const TIPO_OPTIONS: { value: Tipo; label: string }[] = [
