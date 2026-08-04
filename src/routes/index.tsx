@@ -125,7 +125,7 @@ function Home() {
       key: "envio-em-lote",
       label: "Envio em lote",
       icon: Layers,
-      active: false,
+      active: false, // Ocupado pelo atalho, ativado via pathname se necessário
       onSelect: () => {
         window.location.href = "/envio-em-lote";
       },
