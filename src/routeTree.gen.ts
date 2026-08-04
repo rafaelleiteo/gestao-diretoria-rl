@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnlockRouteImport } from './routes/unlock'
 import { Route as GestaoRouteImport } from './routes/gestao'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
+import { Route as EnvioEmLoteRouteImport } from './routes/envio-em-lote'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConsultorioRouteImport } from './routes/consultorio'
 import { Route as AreaRouteImport } from './routes/$area'
@@ -40,6 +41,11 @@ const GestaoRoute = GestaoRouteImport.update({
 const FinanceiroRoute = FinanceiroRouteImport.update({
   id: '/financeiro',
   path: '/financeiro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnvioEmLoteRoute = EnvioEmLoteRouteImport.update({
+  id: '/envio-em-lote',
+  path: '/envio-em-lote',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/$area': typeof AreaRoute
   '/consultorio': typeof ConsultorioRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/envio-em-lote': typeof EnvioEmLoteRoute
   '/financeiro': typeof FinanceiroRouteWithChildren
   '/gestao': typeof GestaoRouteWithChildren
   '/unlock': typeof UnlockRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$area': typeof AreaRoute
   '/dashboard': typeof DashboardRoute
+  '/envio-em-lote': typeof EnvioEmLoteRoute
   '/unlock': typeof UnlockRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/consultorio/modelos-documentos': typeof ConsultorioModelosDocumentosRoute
@@ -160,6 +168,7 @@ export interface FileRoutesById {
   '/$area': typeof AreaRoute
   '/consultorio': typeof ConsultorioRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/envio-em-lote': typeof EnvioEmLoteRoute
   '/financeiro': typeof FinanceiroRouteWithChildren
   '/gestao': typeof GestaoRouteWithChildren
   '/unlock': typeof UnlockRoute
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/$area'
     | '/consultorio'
     | '/dashboard'
+    | '/envio-em-lote'
     | '/financeiro'
     | '/gestao'
     | '/unlock'
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$area'
     | '/dashboard'
+    | '/envio-em-lote'
     | '/unlock'
     | '/consultorio/ficha-planejamento'
     | '/consultorio/modelos-documentos'
@@ -216,6 +227,7 @@ export interface FileRouteTypes {
     | '/$area'
     | '/consultorio'
     | '/dashboard'
+    | '/envio-em-lote'
     | '/financeiro'
     | '/gestao'
     | '/unlock'
@@ -236,6 +248,7 @@ export interface RootRouteChildren {
   AreaRoute: typeof AreaRoute
   ConsultorioRoute: typeof ConsultorioRouteWithChildren
   DashboardRoute: typeof DashboardRoute
+  EnvioEmLoteRoute: typeof EnvioEmLoteRoute
   FinanceiroRoute: typeof FinanceiroRouteWithChildren
   GestaoRoute: typeof GestaoRouteWithChildren
   UnlockRoute: typeof UnlockRoute
@@ -264,6 +277,13 @@ declare module '@tanstack/react-router' {
       path: '/financeiro'
       fullPath: '/financeiro'
       preLoaderRoute: typeof FinanceiroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/envio-em-lote': {
+      id: '/envio-em-lote'
+      path: '/envio-em-lote'
+      fullPath: '/envio-em-lote'
+      preLoaderRoute: typeof EnvioEmLoteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -417,6 +437,7 @@ const rootRouteChildren: RootRouteChildren = {
   AreaRoute: AreaRoute,
   ConsultorioRoute: ConsultorioRouteWithChildren,
   DashboardRoute: DashboardRoute,
+  EnvioEmLoteRoute: EnvioEmLoteRoute,
   FinanceiroRoute: FinanceiroRouteWithChildren,
   GestaoRoute: GestaoRouteWithChildren,
   UnlockRoute: UnlockRoute,
@@ -427,13 +448,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

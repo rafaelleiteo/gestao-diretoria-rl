@@ -56,7 +56,7 @@ function useInboxEdit(): InboxEditCtx | null {
 }
 
 
-type Tipo = "mensagem" | "ideia" | "tarefa";
+export type Tipo = "mensagem" | "ideia" | "tarefa";
 
 export type Prioridade =
   | "urgente"
