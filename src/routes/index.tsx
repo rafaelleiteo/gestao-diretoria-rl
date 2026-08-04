@@ -12,6 +12,7 @@ import {
   type Categoria,
   type Prioridade,
 } from "@/components/Inbox";
+import { Layers } from "lucide-react";
 import { HomeSummary } from "@/components/InboxSummary";
 import { HomeFilterSidebarLayout, type FilterItem } from "@/components/HomeFilterSidebar";
 
@@ -120,6 +121,15 @@ function Home() {
           onSelect: () => setDia(dia === d.value ? null : d.value),
         }))
       : []),
+    {
+      key: "envio-em-lote",
+      label: "Envio em lote",
+      icon: Layers,
+      active: false, // Ocupado pelo atalho, ativado via pathname se necessário
+      onSelect: () => {
+        window.location.href = "/envio-em-lote";
+      },
+    },
   ];
 
   return (

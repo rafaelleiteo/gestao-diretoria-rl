@@ -56,14 +56,15 @@ function useInboxEdit(): InboxEditCtx | null {
 }
 
 
-type Tipo = "mensagem" | "ideia" | "tarefa";
+export type Tipo = "mensagem" | "ideia" | "tarefa";
 
 export type Prioridade =
   | "urgente"
   | "importante"
   | "hoje"
   | "longo_prazo"
-  | "indiferente";
+  | "indiferente"
+  | "descarga";
 
 export type DiaSemana = "seg" | "ter" | "qua" | "qui" | "sex" | "sab" | "dom";
 
@@ -94,6 +95,7 @@ const PRIORIDADE_OPTIONS: { value: Prioridade; label: string }[] = [
   { value: "hoje", label: "Hoje" },
   { value: "longo_prazo", label: "Longo prazo" },
   { value: "indiferente", label: "Indiferente" },
+  { value: "descarga", label: "Descarga" },
 ];
 
 const DIA_OPTIONS: { value: DiaSemana; label: string }[] = [
@@ -178,6 +180,7 @@ function prioridadeStyle(p: Prioridade): { bg: string; color: string } {
   if (p === "importante") return { bg: "#FEF3C7", color: "#B45309" };
   if (p === "hoje") return { bg: "#EEF0FF", color: "#4F46E5" };
   if (p === "longo_prazo") return { bg: "#E0E7FF", color: "#3730A3" };
+  if (p === "descarga") return { bg: "#F3F4F6", color: "#1F2937" };
   return { bg: "#FAFAFA", color: "#6B7280" };
 }
 
@@ -895,6 +898,7 @@ export const PRIORIDADE_FILTER_OPTIONS: { value: Prioridade; label: string }[] =
   { value: "hoje", label: "Hoje" },
   { value: "longo_prazo", label: "Longo prazo" },
   { value: "indiferente", label: "Indiferente" },
+  { value: "descarga", label: "Descarga" },
 ];
 
 export function matchesFilters(
