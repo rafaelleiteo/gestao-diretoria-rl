@@ -120,6 +120,15 @@ function Home() {
           onSelect: () => setDia(dia === d.value ? null : d.value),
         }))
       : []),
+    {
+      key: "envio-em-lote",
+      label: "Envio em lote",
+      icon: Layers,
+      active: false,
+      onSelect: () => {
+        window.location.href = "/envio-em-lote";
+      },
+    },
   ];
 
   return (
