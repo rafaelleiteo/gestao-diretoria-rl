@@ -221,7 +221,7 @@ async function runResumoDiario() {
   const tarefasList = (tarefas ?? []) as TarefaRow[];
 
   const grupo1 = items.filter(
-    (i) => !i.concluido && (i.prioridades ?? []).includes("hoje"),
+    (i) => !i.concluido && ((i.prioridades ?? []).includes("hoje") || (i.prioridades ?? []).includes("urgente")),
   );
   const grupo2 = items.filter(
     (i) => i.dia_semana === ctx.dia && isInboxPending(i, ctx),
