@@ -12,6 +12,7 @@ import {
   type Categoria,
   type Prioridade,
 } from "@/components/Inbox";
+import { Layers } from "lucide-react";
 import { HomeSummary } from "@/components/InboxSummary";
 import { HomeFilterSidebarLayout, type FilterItem } from "@/components/HomeFilterSidebar";
 
