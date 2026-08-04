@@ -131,6 +131,7 @@ const PRIORIDADES: { value: Prioridade; label: string }[] = [
   { value: "hoje", label: "Hoje" },
   { value: "longo_prazo", label: "Longo prazo" },
   { value: "indiferente", label: "Indiferente" },
+  { value: "descarga", label: "Descarga" },
 ];
 
 function BarRow({
