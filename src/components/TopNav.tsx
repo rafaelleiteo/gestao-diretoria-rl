@@ -1,11 +1,13 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { TAB_AREAS } from "@/lib/areas";
 import { lockSite } from "@/lib/gate.functions";
 import { getCurrentUser, listUsers, inviteUser, deleteUser } from "@/lib/auth.functions";
-import { Users, X, Copy, Trash2, Plus } from "lucide-react";
+import { getPermissions, savePermissions, getMyPermissions } from "@/lib/permissions.functions";
+import { Users, X, Copy, Trash2, Plus, ShieldCheck, CheckSquare, Square } from "lucide-react";
 import { toast } from "sonner";
+
 
 
 export function TopNav() {
@@ -14,21 +16,30 @@ export function TopNav() {
   const lock = useServerFn(lockSite);
 
   const [user, setUser] = useState<any>(null);
+  const [myPermissions, setMyPermissions] = useState<any[]>([]);
   const [showUsersModal, setShowUsersModal] = useState(false);
+  const [showPermissionsModal, setShowPermissionsModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
+  const [userPermissions, setUserPermissions] = useState<any[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+
   const fetchCurrentUser = useServerFn(getCurrentUser);
+  const fetchMyPermissions = useServerFn(getMyPermissions);
   const fetchUsers = useServerFn(listUsers);
+  const fetchUserPermissions = useServerFn(getPermissions);
+  const saveUserPermissions = useServerFn(savePermissions);
   const invite = useServerFn(inviteUser);
   const remove = useServerFn(deleteUser);
 
   useEffect(() => {
     fetchCurrentUser().then(setUser);
-  }, [fetchCurrentUser]);
+    fetchMyPermissions().then(setMyPermissions);
+  }, [fetchCurrentUser, fetchMyPermissions]);
 
   useEffect(() => {
     if (showUsersModal) {
@@ -36,7 +47,15 @@ export function TopNav() {
     }
   }, [showUsersModal, fetchUsers]);
 
+  const canAccessArea = (areaSlug: string) => {
+    if (!user) return false;
+    if (user.role === "admin") return true;
+    return myPermissions.some(p => p.area === areaSlug);
+  };
+
+
   async function onLogout() {
+
     await lock();
     await router.invalidate();
     await router.navigate({ to: "/unlock" });
@@ -78,6 +97,88 @@ export function TopNav() {
   }
 
 
+  async function onOpenPermissions(u: any) {
+    setSelectedUser(u);
+    try {
+      const perms = await fetchUserPermissions({ data: u.id });
+      setUserPermissions(perms);
+      setShowPermissionsModal(true);
+    } catch (err: any) {
+      toast.error("Erro ao carregar permissões");
+    }
+  }
+
+  async function onTogglePermission(area: string, item: string) {
+    const exists = userPermissions.some(p => p.area === area && p.item_menu === item);
+    let next: any[];
+    
+    if (exists) {
+      next = userPermissions.filter(p => !(p.area === area && p.item_menu === item));
+    } else {
+      next = [...userPermissions, { area, item_menu: item }];
+    }
+    
+    // If setting specific item, ensure "*" is removed
+    if (item !== "*" && !exists) {
+      next = next.filter(p => !(p.area === area && p.item_menu === "*"));
+    }
+    // If setting "*", remove all other items for that area
+    if (item === "*" && !exists) {
+      next = next.filter(p => p.area !== area || p.item_menu === "*");
+    }
+    
+    setUserPermissions(next);
+  }
+
+  async function onSavePermissions() {
+    if (!selectedUser) return;
+    setSubmitting(true);
+    try {
+      await saveUserPermissions({ 
+        data: { 
+          userId: selectedUser.id, 
+          permissions: userPermissions.map(p => ({ area: p.area, item_menu: p.item_menu }))
+        } 
+      });
+      toast.success("Permissões salvas com sucesso");
+      setShowPermissionsModal(false);
+    } catch (err: any) {
+      toast.error("Erro ao salvar permissões");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  // Map of areas and their items (mocked/extracted from route structure logic)
+  const AREA_MENU_ITEMS: Record<string, { label: string, key: string }[]> = {
+    diretoria: [{ label: "Visão Geral", key: "index" }],
+    financeiro: [
+      { label: "Visão Geral", key: "index" },
+      { label: "Pagamentos Recorrentes", key: "pagamentos-recorrentes" },
+      { label: "Links", key: "links" }
+    ],
+    consultorio: [
+      { label: "Visão Geral", key: "index" },
+      { label: "Ficha de Planejamento", key: "ficha-planejamento" },
+      { label: "Modelos de Documentos", key: "modelos-documentos" },
+      { label: "Protocolos", key: "protocolos" },
+      { label: "Links", key: "links" }
+    ],
+    gestao: [
+      { label: "Prompts", key: "prompts" },
+      { label: "Tarefas Recorrentes", key: "tarefas-recorrentes" },
+      { label: "Recorrentes Mensal", key: "tarefas-recorrentes-mensal" },
+      { label: "Rotina", key: "rotina" },
+      { label: "Links", key: "links" }
+    ],
+    versa3d: [{ label: "Visão Geral", key: "index" }, { label: "Links", key: "links" }],
+    especializacao: [{ label: "Visão Geral", key: "index" }, { label: "Links", key: "links" }],
+    graduacao: [{ label: "Visão Geral", key: "index" }, { label: "Links", key: "links" }],
+    doutorado: [{ label: "Visão Geral", key: "index" }, { label: "Links", key: "links" }],
+    "dentistas-petropolis": [{ label: "Visão Geral", key: "index" }, { label: "Links", key: "links" }],
+    "connect-lab": [{ label: "Visão Geral", key: "index" }, { label: "Links", key: "links" }],
+  };
+
   return (
     <header
       className="sticky top-0 z-30 w-full border-b bg-white"
@@ -93,9 +194,9 @@ export function TopNav() {
         </Link>
 
         <nav className="flex items-center gap-1.5">
-          {TAB_AREAS.map((area) => {
+          {TAB_AREAS.filter(area => canAccessArea(area.slug)).map((area) => {
             const to = `/${area.slug}`;
-            const active = pathname === to;
+            const active = pathname === to || pathname.startsWith(to + "/");
             return (
               <Link
                 key={area.slug}
@@ -256,14 +357,26 @@ export function TopNav() {
                       )}
                       
                       {u.id !== user?.id && (
-                        <button
-                          onClick={() => onDeleteUser(u.id)}
-                          className="flex h-8 w-8 items-center justify-center rounded-full border text-[#B45309] hover:bg-white"
-                          style={{ borderColor: "#EDEDED" }}
-                          title="Remover usuário"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        <>
+                          {u.role === "colaborador" && (
+                            <button
+                              onClick={() => onOpenPermissions(u)}
+                              className="flex h-8 w-8 items-center justify-center rounded-full border text-[#6B7280] hover:bg-white"
+                              style={{ borderColor: "#EDEDED" }}
+                              title="Permissões"
+                            >
+                              <ShieldCheck size={14} />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => onDeleteUser(u.id)}
+                            className="flex h-8 w-8 items-center justify-center rounded-full border text-[#B45309] hover:bg-white"
+                            style={{ borderColor: "#EDEDED" }}
+                            title="Remover usuário"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>

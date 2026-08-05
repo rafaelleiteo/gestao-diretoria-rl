@@ -202,6 +202,38 @@ export type Database = {
           },
         ]
       }
+      permissoes_usuario: {
+        Row: {
+          area: string
+          criado_em: string | null
+          id: string
+          item_menu: string
+          usuario_id: string
+        }
+        Insert: {
+          area: string
+          criado_em?: string | null
+          id?: string
+          item_menu: string
+          usuario_id: string
+        }
+        Update: {
+          area?: string
+          criado_em?: string | null
+          id?: string
+          item_menu?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permissoes_usuario_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           convite_token: string | null

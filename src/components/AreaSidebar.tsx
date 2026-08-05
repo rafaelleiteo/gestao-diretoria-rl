@@ -1,6 +1,11 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, redirect, useRouter } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { Menu, X, type LucideIcon } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode, useMemo } from "react";
+import { getCurrentUser } from "@/lib/auth.functions";
+import { getMyPermissions } from "@/lib/permissions.functions";
+import { toast } from "sonner";
+
 
 export type SidebarMenuItem = {
   to: string;
@@ -17,7 +22,57 @@ type Props = {
 
 export function AreaSidebarLayout({ title, menu, children }: Props) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [myPermissions, setMyPermissions] = useState<any[]>([]);
+
+  const fetchCurrentUser = useServerFn(getCurrentUser);
+  const fetchMyPermissions = useServerFn(getMyPermissions);
+
+  useEffect(() => {
+    fetchCurrentUser().then(setUser);
+    fetchMyPermissions().then(setMyPermissions);
+  }, [fetchCurrentUser, fetchMyPermissions]);
+
+  const slugFromTitle = title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-");
+  
+  const filteredMenu = useMemo(() => {
+    if (!user) return [];
+    if (user.role === "admin") return menu;
+
+    const areaPerms = myPermissions.filter(p => p.area === slugFromTitle);
+    const hasAreaFull = areaPerms.some(p => p.item_menu === "*");
+
+    if (hasAreaFull) return menu;
+
+    return menu.filter(item => {
+      const itemKey = item.to.split("/").pop() || "index";
+      return areaPerms.some(p => p.item_menu === itemKey);
+    });
+  }, [user, myPermissions, menu, slugFromTitle]);
+
+  // Authorization check
+  useEffect(() => {
+    if (user && user.role !== "admin") {
+      const areaPerms = myPermissions.filter(p => p.area === slugFromTitle);
+      const hasAccess = areaPerms.length > 0;
+      
+      if (!hasAccess) {
+        toast.error("Você não tem acesso a esta área");
+        router.navigate({ to: "/" });
+        return;
+      }
+
+      // Check specific item if not index
+      const itemKey = pathname.split("/").pop() || "index";
+      if (itemKey !== slugFromTitle && !areaPerms.some(p => p.item_menu === "*" || p.item_menu === itemKey)) {
+        toast.error("Você não tem acesso a esta ferramenta");
+        router.navigate({ to: `/${slugFromTitle}` });
+      }
+    }
+  }, [user, myPermissions, pathname, router, slugFromTitle]);
+
 
   // Close drawer on route change
   useEffect(() => {
@@ -36,7 +91,7 @@ export function AreaSidebarLayout({ title, menu, children }: Props) {
 
   const renderNav = (onNav?: () => void) => (
     <nav className="flex flex-col gap-0.5">
-      {menu.map((item) => {
+      {filteredMenu.map((item) => {
         const active = item.exact
           ? pathname === item.to
           : pathname === item.to || pathname.startsWith(item.to + "/");
