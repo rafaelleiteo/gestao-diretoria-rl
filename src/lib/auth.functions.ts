@@ -23,9 +23,32 @@ export const listUsers = createServerFn({ method: "GET" })
       .from("profiles")
       .select("*")
       .order("criado_em", { ascending: false });
-    
+
     if (error) throw error;
-    return profiles;
+
+    const { data: convites, error: convitesError } = await supabase
+      .from("convites")
+      .select("*")
+      .eq("status", "pendente")
+      .order("criado_em", { ascending: false });
+
+    if (convitesError) throw convitesError;
+
+    const pendentes = (convites ?? []).map((c) => ({
+      id: c.id,
+      nome: c.nome,
+      email: c.email,
+      role: "colaborador",
+      status: "convidado",
+      convite_token: c.token,
+      criado_em: c.criado_em,
+      isConvite: true,
+    }));
+
+    return [
+      ...(profiles ?? []).map((p) => ({ ...p, isConvite: false })),
+      ...pendentes,
+    ];
   });
 
 export const inviteUser = createServerFn({ method: "POST" })
@@ -38,31 +61,29 @@ export const inviteUser = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const token = crypto.randomUUID();
-    
-    // We use a random UUID for ID for now, as we don't have an auth.user yet.
-    // However, Supabase profiles table usually requires a valid UUID.
-    // The instructions say "vincular ao perfil existente (mesmo id)" during signup.
-    // This means we'll create the profile with a random ID, then when they sign up,
-    // we'll have a problem if we want them to have the SAME ID.
-    // Actually, we can create the profile and then update it, or better:
-    // Create the profile with a random ID, and during signup, update the profile ID or create a new one and delete the old.
-    // Or simpler: create the profile and use the token to find it.
-    
-    const { data: profile, error } = await supabaseAdmin
-      .from("profiles")
+
+    const { data: convite, error } = await supabaseAdmin
+      .from("convites")
       .insert({
-        id: crypto.randomUUID(), 
         nome: data.nome,
         email: data.email,
-        role: "colaborador",
-        status: "convidado",
-        convite_token: token
+        token,
+        status: "pendente",
       })
       .select()
       .single();
 
     if (error) throw error;
-    return { profile, token };
+    return { convite, token };
+  });
+
+export const deleteInvite = createServerFn({ method: "POST" })
+  .inputValidator((id: string) => id)
+  .handler(async ({ data: id }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("convites").delete().eq("id", id);
+    if (error) throw error;
+    return { ok: true };
   });
 
 export const deleteUser = createServerFn({ method: "POST" })
@@ -98,19 +119,19 @@ export const deleteUser = createServerFn({ method: "POST" })
 export const getInviteByToken = createServerFn({ method: "GET" })
   .inputValidator((token: string) => token)
   .handler(async ({ data: token }) => {
-    const { data: profile, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("convite_token", token)
-      .eq("status", "convidado")
-      .single();
+    const { data: convite, error } = await supabase
+      .from("convites")
+      .select("id, nome, email, status")
+      .eq("token", token)
+      .eq("status", "pendente")
+      .maybeSingle();
 
-    if (error || !profile) return null;
-    return profile;
+    if (error || !convite) return null;
+    return convite;
   });
 
 export const acceptInvite = createServerFn({ method: "POST" })
-  .inputValidator((data: any) => 
+  .inputValidator((data: unknown) => 
     z.object({
       token: z.string(),
       nome: z.string().min(1),
@@ -120,43 +141,36 @@ export const acceptInvite = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     
-    // 1. Find profile
-    const { data: profile, error: findError } = await supabaseAdmin
-      .from("profiles")
+    // 1. Find pending invite
+    const { data: convite, error: findError } = await supabaseAdmin
+      .from("convites")
       .select("*")
-      .eq("convite_token", data.token)
-      .eq("status", "convidado")
-      .single();
+      .eq("token", data.token)
+      .eq("status", "pendente")
+      .maybeSingle();
 
-    if (findError || !profile) throw new Error("Convite inválido");
+    if (findError) throw findError;
+    if (!convite) throw new Error("Convite inválido ou já utilizado");
 
-    // 2. Create auth user
-    const { data: { user }, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email: profile.email,
+    // 2. Create auth user (this generates the auth.users id)
+    const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
+      email: convite.email,
       password: data.password,
       email_confirm: true,
       user_metadata: { nome: data.nome }
     });
 
     if (createError) throw createError;
+    const user = created?.user;
     if (!user) throw new Error("Erro ao criar usuário");
 
-    // 3. Update profile: assign real ID, change status, update name, clear token
-    // Since ID is primary key and we can't easily change it if there are foreign keys (none yet),
-    // we'll delete the old one and create a new one with the correct ID.
-    const { error: deleteError } = await supabaseAdmin
-      .from("profiles")
-      .delete()
-      .eq("id", profile.id);
-    
-    if (deleteError) throw deleteError;
-
+    // 3. Only now create the profile, using the real auth id
     const { error: insertError } = await supabaseAdmin
       .from("profiles")
       .insert({
         id: user.id,
         nome: data.nome,
-        email: profile.email,
+        email: convite.email,
         role: "colaborador",
         status: "ativo",
         convite_token: null
@@ -164,5 +178,14 @@ export const acceptInvite = createServerFn({ method: "POST" })
 
     if (insertError) throw insertError;
 
+    // 4. Mark invite as used
+    const { error: updateError } = await supabaseAdmin
+      .from("convites")
+      .update({ status: "usado" })
+      .eq("id", convite.id);
+
+    if (updateError) throw updateError;
+
     return { ok: true };
   });
+
