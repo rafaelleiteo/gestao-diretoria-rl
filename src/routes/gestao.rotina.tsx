@@ -218,18 +218,6 @@ function RotinaPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {(!cards || cards.length === 0) && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100"
-              onClick={handlePopulateAll}
-              disabled={restoreMutation.isPending}
-            >
-              <Database className="h-4 w-4 mr-2" />
-              {restoreMutation.isPending ? "Populando..." : "Popular Dados Padrão"}
-            </Button>
-          )}
           <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />
             Exportar
