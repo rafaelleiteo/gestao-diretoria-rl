@@ -1061,7 +1061,7 @@ export function InboxList({
   prioridades?: Prioridade[];
   mostrarConcluidos?: boolean;
 }) {
-  const [showConcluidos, setShowConcluidos] = useState(mostrarConcluidos ?? false);
+  const [showConcluidos, setShowConcluidos] = useState(mostrarConcluidos);
   const { data, isLoading } = useInboxItems(areaFilter);
   const toggle = useToggle();
 

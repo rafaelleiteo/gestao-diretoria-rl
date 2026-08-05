@@ -34,7 +34,7 @@ export function TarefasRecorrentesMensal() {
     queryKey: ["tarefas_recorrentes_mensal_item"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("tarefas_recorrentes_mensal_item")
+        .from("tarefas_recorrentes_mensal_item" as any)
         .select("id, dia_mes, descricao")
         .order("dia_mes", { ascending: true })
         .order("descricao", { ascending: true });
@@ -47,7 +47,7 @@ export function TarefasRecorrentesMensal() {
     queryKey: ["tarefas_recorrentes_mensal_registro", ano],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("tarefas_recorrentes_mensal_registro")
+        .from("tarefas_recorrentes_mensal_registro" as any)
         .select("id, item_id, mes, ano, feito")
         .eq("ano", ano);
       if (error) throw error;
@@ -69,19 +69,19 @@ export function TarefasRecorrentesMensal() {
       const existing = registroMap.get(key);
       if (existing) {
         const { error } = await supabase
-          .from("tarefas_recorrentes_mensal_registro")
-          .update({ feito: !existing.feito } as never)
+          .from("tarefas_recorrentes_mensal_registro" as any)
+          .update({ feito: !existing.feito } as any)
           .eq("id", existing.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from("tarefas_recorrentes_mensal_registro")
+          .from("tarefas_recorrentes_mensal_registro" as any)
           .insert({
             item_id: input.item_id,
             mes: input.mes,
             ano,
             feito: true,
-          } as never);
+          } as any);
         if (error) throw error;
       }
     },
@@ -96,10 +96,10 @@ export function TarefasRecorrentesMensal() {
       if (isNaN(dia) || dia < 1 || dia > 31) throw new Error("Dia inválido");
       if (!novaDescricao.trim()) throw new Error("Descrição vazia");
 
-      const { error } = await supabase.from("tarefas_recorrentes_mensal_item").insert({
+      const { error } = await supabase.from("tarefas_recorrentes_mensal_item" as any).insert({
         dia_mes: dia,
         descricao: novaDescricao.trim(),
-      } as never);
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
