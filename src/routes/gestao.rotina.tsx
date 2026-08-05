@@ -87,7 +87,16 @@ function RotinaPage() {
 
   const { data: cards = [], isLoading } = useQuery({
     queryKey: ['rotina_cards'],
-    queryFn: () => getRotinaCards(),
+    queryFn: async () => {
+      const data = await getRotinaCards();
+      // Auto-seed if empty
+      if (data && data.length === 0) {
+        console.log("Seeding default routine cards...");
+        await restoreDefaultRotina({ cards: ROTINA_DEFAULTS });
+        return getRotinaCards();
+      }
+      return data;
+    },
   });
 
   const saveMutation = useMutation({
