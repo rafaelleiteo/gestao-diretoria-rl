@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect, useMemo } from "react";
 import { TAB_AREAS } from "@/lib/areas";
 import { lockSite } from "@/lib/gate.functions";
-import { getCurrentUser, listUsers, inviteUser, deleteUser } from "@/lib/auth.functions";
+import { getCurrentUser, listUsers, inviteUser, deleteUser, deleteInvite } from "@/lib/auth.functions";
 import { getPermissions, savePermissions, getMyPermissions } from "@/lib/permissions.functions";
 import { Users, X, Copy, Trash2, Plus, ShieldCheck, CheckSquare, Square } from "lucide-react";
 import { toast } from "sonner";
@@ -37,6 +37,7 @@ export function TopNav() {
   const saveUserPermissions = useServerFn(savePermissions);
   const invite = useServerFn(inviteUser);
   const remove = useServerFn(deleteUser);
+  const removeInvite = useServerFn(deleteInvite);
 
   useEffect(() => {
     let active = true;
@@ -391,7 +392,7 @@ export function TopNav() {
 
 
                     <div className="flex items-center gap-2">
-                      {u.status === "convidado" && u.convite_token && (
+                      {u.convite_token && u.status !== "ativo" && (
                         <button
                           onClick={() => {
                             const link = `${window.location.origin}/convite/${u.convite_token}`;
@@ -419,7 +420,7 @@ export function TopNav() {
                             </button>
                           )}
                           <button
-                            onClick={() => onDeleteUser(u.id)}
+                            onClick={() => onDeleteUser(u)}
                             className="flex h-8 w-8 items-center justify-center rounded-full border text-[#B45309] hover:bg-white"
                             style={{ borderColor: "#EDEDED" }}
                             title="Remover usuário"
