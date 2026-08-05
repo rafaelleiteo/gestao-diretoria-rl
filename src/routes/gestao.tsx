@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { Sparkles, Repeat } from "lucide-react";
+import { Sparkles, Repeat, Calendar } from "lucide-react";
 import { AreaSidebarLayout, type SidebarMenuItem } from "@/components/AreaSidebar";
 
 export const Route = createFileRoute("/gestao")({
@@ -17,6 +17,7 @@ export const Route = createFileRoute("/gestao")({
 const MENU: SidebarMenuItem[] = [
   { to: "/gestao/prompts", label: "Prompts", icon: Sparkles },
   { to: "/gestao/tarefas-recorrentes", label: "Tarefas Recorrentes", icon: Repeat },
+  { to: "/gestao/rotina", label: "Rotina", icon: Calendar },
 ];
 
 function GestaoLayout() {
