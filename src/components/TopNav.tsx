@@ -29,7 +29,10 @@ export function TopNav() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
+  const [inviteStep, setInviteStep] = useState<"dados" | "permissoes">("dados");
+  const [invitePermissions, setInvitePermissions] = useState<Permission[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
 
 
   const fetchCurrentUser = useServerFn(getCurrentUser);
