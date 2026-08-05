@@ -28,6 +28,7 @@ import { Route as GestaoPromptsRouteImport } from './routes/gestao.prompts'
 import { Route as GestaoLinksRouteImport } from './routes/gestao.links'
 import { Route as FinanceiroPagamentosRecorrentesRouteImport } from './routes/financeiro.pagamentos-recorrentes'
 import { Route as FinanceiroLinksRouteImport } from './routes/financeiro.links'
+import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
 import { Route as ConsultorioProtocolosRouteImport } from './routes/consultorio.protocolos'
 import { Route as ConsultorioModelosDocumentosRouteImport } from './routes/consultorio.modelos-documentos'
 import { Route as ConsultorioLinksRouteImport } from './routes/consultorio.links'
@@ -134,6 +135,11 @@ const FinanceiroLinksRoute = FinanceiroLinksRouteImport.update({
   path: '/links',
   getParentRoute: () => FinanceiroRoute,
 } as any)
+const ConviteTokenRoute = ConviteTokenRouteImport.update({
+  id: '/convite/$token',
+  path: '/convite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConsultorioProtocolosRoute = ConsultorioProtocolosRouteImport.update({
   id: '/protocolos',
   path: '/protocolos',
@@ -188,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/consultorio/links': typeof ConsultorioLinksRoute
   '/consultorio/modelos-documentos': typeof ConsultorioModelosDocumentosRoute
   '/consultorio/protocolos': typeof ConsultorioProtocolosRoute
+  '/convite/$token': typeof ConviteTokenRoute
   '/financeiro/links': typeof FinanceiroLinksRoute
   '/financeiro/pagamentos-recorrentes': typeof FinanceiroPagamentosRecorrentesRoute
   '/gestao/links': typeof GestaoLinksRoute
@@ -212,6 +219,7 @@ export interface FileRoutesByTo {
   '/consultorio/links': typeof ConsultorioLinksRoute
   '/consultorio/modelos-documentos': typeof ConsultorioModelosDocumentosRoute
   '/consultorio/protocolos': typeof ConsultorioProtocolosRoute
+  '/convite/$token': typeof ConviteTokenRoute
   '/financeiro/links': typeof FinanceiroLinksRoute
   '/financeiro/pagamentos-recorrentes': typeof FinanceiroPagamentosRecorrentesRoute
   '/gestao/links': typeof GestaoLinksRoute
@@ -241,6 +249,7 @@ export interface FileRoutesById {
   '/consultorio/links': typeof ConsultorioLinksRoute
   '/consultorio/modelos-documentos': typeof ConsultorioModelosDocumentosRoute
   '/consultorio/protocolos': typeof ConsultorioProtocolosRoute
+  '/convite/$token': typeof ConviteTokenRoute
   '/financeiro/links': typeof FinanceiroLinksRoute
   '/financeiro/pagamentos-recorrentes': typeof FinanceiroPagamentosRecorrentesRoute
   '/gestao/links': typeof GestaoLinksRoute
@@ -271,6 +280,7 @@ export interface FileRouteTypes {
     | '/consultorio/links'
     | '/consultorio/modelos-documentos'
     | '/consultorio/protocolos'
+    | '/convite/$token'
     | '/financeiro/links'
     | '/financeiro/pagamentos-recorrentes'
     | '/gestao/links'
@@ -295,6 +305,7 @@ export interface FileRouteTypes {
     | '/consultorio/links'
     | '/consultorio/modelos-documentos'
     | '/consultorio/protocolos'
+    | '/convite/$token'
     | '/financeiro/links'
     | '/financeiro/pagamentos-recorrentes'
     | '/gestao/links'
@@ -323,6 +334,7 @@ export interface FileRouteTypes {
     | '/consultorio/links'
     | '/consultorio/modelos-documentos'
     | '/consultorio/protocolos'
+    | '/convite/$token'
     | '/financeiro/links'
     | '/financeiro/pagamentos-recorrentes'
     | '/gestao/links'
@@ -347,6 +359,7 @@ export interface RootRouteChildren {
   FinanceiroRoute: typeof FinanceiroRouteWithChildren
   GestaoRoute: typeof GestaoRouteWithChildren
   UnlockRoute: typeof UnlockRoute
+  ConviteTokenRoute: typeof ConviteTokenRoute
   ApiPublicHooksResumoDiarioTarefasRoute: typeof ApiPublicHooksResumoDiarioTarefasRoute
   ApiPublicHooksSendRemindersRoute: typeof ApiPublicHooksSendRemindersRoute
 }
@@ -486,6 +499,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FinanceiroLinksRouteImport
       parentRoute: typeof FinanceiroRoute
     }
+    '/convite/$token': {
+      id: '/convite/$token'
+      path: '/convite/$token'
+      fullPath: '/convite/$token'
+      preLoaderRoute: typeof ConviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/consultorio/protocolos': {
       id: '/consultorio/protocolos'
       path: '/protocolos'
@@ -616,6 +636,7 @@ const rootRouteChildren: RootRouteChildren = {
   FinanceiroRoute: FinanceiroRouteWithChildren,
   GestaoRoute: GestaoRouteWithChildren,
   UnlockRoute: UnlockRoute,
+  ConviteTokenRoute: ConviteTokenRoute,
   ApiPublicHooksResumoDiarioTarefasRoute:
     ApiPublicHooksResumoDiarioTarefasRoute,
   ApiPublicHooksSendRemindersRoute: ApiPublicHooksSendRemindersRoute,
@@ -623,13 +644,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
