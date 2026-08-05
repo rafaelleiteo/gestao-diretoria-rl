@@ -120,16 +120,23 @@ export function TopNav() {
     }
   }
 
-  async function onDeleteUser(id: string) {
-    if (!confirm("Tem certeza que deseja remover este acesso?")) return;
+  async function onDeleteUser(u: any) {
+    const isConvite = !!u.isConvite;
+    if (!confirm(isConvite ? "Cancelar este convite?" : "Tem certeza que deseja remover este acesso?")) return;
     try {
-      await remove({ data: id });
-      toast.success("Usuário removido");
+      if (isConvite) {
+        await removeInvite({ data: u.id });
+        toast.success("Convite cancelado");
+      } else {
+        await remove({ data: u.id });
+        toast.success("Usuário removido");
+      }
       fetchUsers().then(setUsers);
     } catch (err: any) {
       toast.error(err.message || "Erro ao remover");
     }
   }
+
 
 
   async function onOpenPermissions(u: any) {
