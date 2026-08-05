@@ -17,6 +17,7 @@ export const Route = createFileRoute("/gestao")({
 const MENU: SidebarMenuItem[] = [
   { to: "/gestao/prompts", label: "Prompts", icon: Sparkles },
   { to: "/gestao/tarefas-recorrentes", label: "Tarefas Recorrentes", icon: Repeat },
+  { to: "/gestao/tarefas-recorrentes-mensal", label: "Recorrentes Mensal", icon: Calendar },
   { to: "/gestao/rotina", label: "Rotina", icon: Calendar },
   { to: "/gestao/links", label: "Links", icon: LinkIcon },
 ];

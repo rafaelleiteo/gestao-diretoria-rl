@@ -84,6 +84,7 @@ function Home() {
   const [dia, setDia] = useState<DiaSemana | null>(null);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [prioridades, setPrioridades] = useState<Prioridade[]>([]);
+  const [mostrarConcluidos, setMostrarConcluidos] = useState(false);
 
   const toggleCategoria = (c: Categoria) =>
     setCategorias((prev) =>
@@ -212,6 +213,25 @@ function Home() {
               </div>
             </div>
           )}
+
+          {tab === "todos" && (
+            <div className="flex items-center gap-2 mt-1">
+              <input
+                type="checkbox"
+                id="mostrar-concluidos"
+                checked={mostrarConcluidos}
+                onChange={(e) => setMostrarConcluidos(e.target.checked)}
+                className="h-4 w-4 rounded border-[#EDEDED] text-[#4F46E5] focus:ring-[#4F46E5]"
+              />
+              <label
+                htmlFor="mostrar-concluidos"
+                className="text-[12px] font-medium"
+                style={{ color: "#6B7280" }}
+              >
+                Mostrar concluídos
+              </label>
+            </div>
+          )}
         </div>
 
         {tab === "hoje" && (
@@ -223,6 +243,7 @@ function Home() {
             diaFilter={dia}
             categorias={categorias}
             prioridades={prioridades}
+            mostrarConcluidos={mostrarConcluidos}
             emptyLabel="Nenhum item ainda. Adicione o primeiro acima."
           />
         )}

@@ -21,6 +21,7 @@ import { Route as GestaoIndexRouteImport } from './routes/gestao.index'
 import { Route as FinanceiroIndexRouteImport } from './routes/financeiro.index'
 import { Route as ConsultorioIndexRouteImport } from './routes/consultorio.index'
 import { Route as AreaIndexRouteImport } from './routes/$area.index'
+import { Route as GestaoTarefasRecorrentesMensalRouteImport } from './routes/gestao.tarefas-recorrentes-mensal'
 import { Route as GestaoTarefasRecorrentesRouteImport } from './routes/gestao.tarefas-recorrentes'
 import { Route as GestaoRotinaRouteImport } from './routes/gestao.rotina'
 import { Route as GestaoPromptsRouteImport } from './routes/gestao.prompts'
@@ -94,6 +95,12 @@ const AreaIndexRoute = AreaIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AreaRoute,
 } as any)
+const GestaoTarefasRecorrentesMensalRoute =
+  GestaoTarefasRecorrentesMensalRouteImport.update({
+    id: '/tarefas-recorrentes-mensal',
+    path: '/tarefas-recorrentes-mensal',
+    getParentRoute: () => GestaoRoute,
+  } as any)
 const GestaoTarefasRecorrentesRoute =
   GestaoTarefasRecorrentesRouteImport.update({
     id: '/tarefas-recorrentes',
@@ -180,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/gestao/prompts': typeof GestaoPromptsRoute
   '/gestao/rotina': typeof GestaoRotinaRoute
   '/gestao/tarefas-recorrentes': typeof GestaoTarefasRecorrentesRoute
+  '/gestao/tarefas-recorrentes-mensal': typeof GestaoTarefasRecorrentesMensalRoute
   '/$area/': typeof AreaIndexRoute
   '/consultorio/': typeof ConsultorioIndexRoute
   '/financeiro/': typeof FinanceiroIndexRoute
@@ -202,6 +210,7 @@ export interface FileRoutesByTo {
   '/gestao/prompts': typeof GestaoPromptsRoute
   '/gestao/rotina': typeof GestaoRotinaRoute
   '/gestao/tarefas-recorrentes': typeof GestaoTarefasRecorrentesRoute
+  '/gestao/tarefas-recorrentes-mensal': typeof GestaoTarefasRecorrentesMensalRoute
   '/$area': typeof AreaIndexRoute
   '/consultorio': typeof ConsultorioIndexRoute
   '/financeiro': typeof FinanceiroIndexRoute
@@ -229,6 +238,7 @@ export interface FileRoutesById {
   '/gestao/prompts': typeof GestaoPromptsRoute
   '/gestao/rotina': typeof GestaoRotinaRoute
   '/gestao/tarefas-recorrentes': typeof GestaoTarefasRecorrentesRoute
+  '/gestao/tarefas-recorrentes-mensal': typeof GestaoTarefasRecorrentesMensalRoute
   '/$area/': typeof AreaIndexRoute
   '/consultorio/': typeof ConsultorioIndexRoute
   '/financeiro/': typeof FinanceiroIndexRoute
@@ -257,6 +267,7 @@ export interface FileRouteTypes {
     | '/gestao/prompts'
     | '/gestao/rotina'
     | '/gestao/tarefas-recorrentes'
+    | '/gestao/tarefas-recorrentes-mensal'
     | '/$area/'
     | '/consultorio/'
     | '/financeiro/'
@@ -279,6 +290,7 @@ export interface FileRouteTypes {
     | '/gestao/prompts'
     | '/gestao/rotina'
     | '/gestao/tarefas-recorrentes'
+    | '/gestao/tarefas-recorrentes-mensal'
     | '/$area'
     | '/consultorio'
     | '/financeiro'
@@ -305,6 +317,7 @@ export interface FileRouteTypes {
     | '/gestao/prompts'
     | '/gestao/rotina'
     | '/gestao/tarefas-recorrentes'
+    | '/gestao/tarefas-recorrentes-mensal'
     | '/$area/'
     | '/consultorio/'
     | '/financeiro/'
@@ -411,6 +424,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$area/'
       preLoaderRoute: typeof AreaIndexRouteImport
       parentRoute: typeof AreaRoute
+    }
+    '/gestao/tarefas-recorrentes-mensal': {
+      id: '/gestao/tarefas-recorrentes-mensal'
+      path: '/tarefas-recorrentes-mensal'
+      fullPath: '/gestao/tarefas-recorrentes-mensal'
+      preLoaderRoute: typeof GestaoTarefasRecorrentesMensalRouteImport
+      parentRoute: typeof GestaoRoute
     }
     '/gestao/tarefas-recorrentes': {
       id: '/gestao/tarefas-recorrentes'
@@ -550,6 +570,7 @@ interface GestaoRouteChildren {
   GestaoPromptsRoute: typeof GestaoPromptsRoute
   GestaoRotinaRoute: typeof GestaoRotinaRoute
   GestaoTarefasRecorrentesRoute: typeof GestaoTarefasRecorrentesRoute
+  GestaoTarefasRecorrentesMensalRoute: typeof GestaoTarefasRecorrentesMensalRoute
   GestaoIndexRoute: typeof GestaoIndexRoute
 }
 
@@ -558,6 +579,7 @@ const GestaoRouteChildren: GestaoRouteChildren = {
   GestaoPromptsRoute: GestaoPromptsRoute,
   GestaoRotinaRoute: GestaoRotinaRoute,
   GestaoTarefasRecorrentesRoute: GestaoTarefasRecorrentesRoute,
+  GestaoTarefasRecorrentesMensalRoute: GestaoTarefasRecorrentesMensalRoute,
   GestaoIndexRoute: GestaoIndexRoute,
 }
 
