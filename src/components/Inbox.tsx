@@ -1059,8 +1059,9 @@ export function InboxList({
   diaFilter?: DiaSemana | null;
   categorias?: Categoria[];
   prioridades?: Prioridade[];
+  mostrarConcluidos?: boolean;
 }) {
-  const [showConcluidos, setShowConcluidos] = useState(false);
+  const [showConcluidos, setShowConcluidos] = useState(mostrarConcluidos ?? false);
   const { data, isLoading } = useInboxItems(areaFilter);
   const toggle = useToggle();
 

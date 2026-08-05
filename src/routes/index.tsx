@@ -84,6 +84,7 @@ function Home() {
   const [dia, setDia] = useState<DiaSemana | null>(null);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [prioridades, setPrioridades] = useState<Prioridade[]>([]);
+  const [mostrarConcluidos, setMostrarConcluidos] = useState(false);
 
   const toggleCategoria = (c: Categoria) =>
     setCategorias((prev) =>
