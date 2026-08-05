@@ -292,37 +292,59 @@ export function TopNav() {
 
               {showAddForm && (
                 <form onSubmit={onInvite} className="mb-8 rounded-xl border bg-[#FAFAFA] p-4" style={{ borderColor: "#EDEDED" }}>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-medium uppercase text-[#6B7280]">Nome</label>
-                      <input
-                        type="text"
-                        value={newUserName}
-                        onChange={(e) => setNewUserName(e.target.value)}
-                        required
-                        className="h-9 rounded-lg border bg-white px-3 text-[13px] outline-none focus:border-[#4F46E5]"
-                        style={{ borderColor: "#EDEDED" }}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-medium uppercase text-[#6B7280]">E-mail</label>
-                      <input
-                        type="email"
-                        value={newUserEmail}
-                        onChange={(e) => setNewUserEmail(e.target.value)}
-                        required
-                        className="h-9 rounded-lg border bg-white px-3 text-[13px] outline-none focus:border-[#4F46E5]"
-                        style={{ borderColor: "#EDEDED" }}
-                      />
-                    </div>
+                  <div className="mb-4 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider">
+                    <span style={{ color: inviteStep === "dados" ? "#4F46E5" : "#6B7280" }}>1. Dados</span>
+                    <span style={{ color: "#EDEDED" }}>—</span>
+                    <span style={{ color: inviteStep === "permissoes" ? "#4F46E5" : "#6B7280" }}>2. Permissões</span>
                   </div>
+
+                  {inviteStep === "dados" ? (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-medium uppercase text-[#6B7280]">Nome</label>
+                        <input
+                          type="text"
+                          value={newUserName}
+                          onChange={(e) => setNewUserName(e.target.value)}
+                          required
+                          className="h-9 rounded-lg border bg-white px-3 text-[13px] outline-none focus:border-[#4F46E5]"
+                          style={{ borderColor: "#EDEDED" }}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-medium uppercase text-[#6B7280]">E-mail</label>
+                        <input
+                          type="email"
+                          value={newUserEmail}
+                          onChange={(e) => setNewUserEmail(e.target.value)}
+                          required
+                          className="h-9 rounded-lg border bg-white px-3 text-[13px] outline-none focus:border-[#4F46E5]"
+                          style={{ borderColor: "#EDEDED" }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="max-h-[45vh] overflow-y-auto pr-1">
+                      <p className="mb-3 text-[12px] text-[#6B7280]">
+                        Defina o que <strong className="text-[#111111]">{newUserName}</strong> poderá acessar. As permissões
+                        serão aplicadas automaticamente quando a conta for ativada.
+                      </p>
+                      <PermissionsPanel
+                        permissions={invitePermissions}
+                        onToggle={(area, item) =>
+                          setInvitePermissions((prev) => togglePermission(prev, area, item))
+                        }
+                      />
+                    </div>
+                  )}
+
                   <div className="mt-4 flex justify-end gap-2">
                     <button
                       type="button"
-                      onClick={() => setShowAddForm(false)}
+                      onClick={() => (inviteStep === "permissoes" ? setInviteStep("dados") : closeAddForm())}
                       className="rounded-full px-4 py-1.5 text-[12px] font-medium text-[#6B7280]"
                     >
-                      Cancelar
+                      {inviteStep === "permissoes" ? "Voltar" : "Cancelar"}
                     </button>
                     <button
                       type="submit"
@@ -330,11 +352,16 @@ export function TopNav() {
                       className="rounded-full px-4 py-1.5 text-[12px] font-semibold text-white disabled:opacity-50"
                       style={{ backgroundColor: "#4F46E5" }}
                     >
-                      {submitting ? "Salvando..." : "Salvar e Gerar Link"}
+                      {inviteStep === "dados"
+                        ? "Continuar"
+                        : submitting
+                          ? "Salvando..."
+                          : "Salvar e Gerar Link"}
                     </button>
                   </div>
                 </form>
               )}
+
 
               <div className="space-y-2">
                 {users.map((u) => (
