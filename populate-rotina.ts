@@ -1,4 +1,8 @@
-import { supabaseAdmin } from "./src/integrations/supabase/client.server";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const rawData = `
 distribuir | ideias | card | Gestão | Estudar uma palavra em inglês | false
@@ -272,7 +276,7 @@ rawData.trim().split('\n').forEach(line => {
   const area = areaMap[areaName] || null;
   const concluido = concluidoStr === 'true';
   
-  const key = `${tab}|${coluna}`;
+  const key = \`\${tab}|\${coluna}\`;
   orders[key] = (orders[key] || 0) + 1;
   
   cards.push({
@@ -289,19 +293,17 @@ rawData.trim().split('\n').forEach(line => {
 async function run() {
   console.log(\`Populating \${cards.length} cards...\`);
   try {
-    // 1. Delete all existing records
-    const { error: delError } = await supabaseAdmin
+    const { error: delError } = await supabase
       .from("rotina_cards")
       .delete()
       .not("id", "is", null);
 
     if (delError) throw delError;
 
-    // 2. Insert new records in batches of 50 to avoid any size limits
     const batchSize = 50;
     for (let i = 0; i < cards.length; i += batchSize) {
       const batch = cards.slice(i, i + batchSize);
-      const { error: insError } = await supabaseAdmin
+      const { error: insError } = await supabase
         .from("rotina_cards")
         .insert(batch);
       if (insError) throw insError;
