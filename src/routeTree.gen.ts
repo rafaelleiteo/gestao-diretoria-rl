@@ -24,8 +24,11 @@ import { Route as AreaIndexRouteImport } from './routes/$area.index'
 import { Route as GestaoTarefasRecorrentesRouteImport } from './routes/gestao.tarefas-recorrentes'
 import { Route as GestaoRotinaRouteImport } from './routes/gestao.rotina'
 import { Route as GestaoPromptsRouteImport } from './routes/gestao.prompts'
+import { Route as GestaoLinksRouteImport } from './routes/gestao.links'
 import { Route as FinanceiroPagamentosRecorrentesRouteImport } from './routes/financeiro.pagamentos-recorrentes'
+import { Route as FinanceiroLinksRouteImport } from './routes/financeiro.links'
 import { Route as ConsultorioModelosDocumentosRouteImport } from './routes/consultorio.modelos-documentos'
+import { Route as ConsultorioLinksRouteImport } from './routes/consultorio.links'
 import { Route as ConsultorioFichaPlanejamentoRouteImport } from './routes/consultorio.ficha-planejamento'
 import { Route as AreaLinksRouteImport } from './routes/$area.links'
 import { Route as ApiPublicHooksSendRemindersRouteImport } from './routes/api/public/hooks/send-reminders'
@@ -107,18 +110,33 @@ const GestaoPromptsRoute = GestaoPromptsRouteImport.update({
   path: '/prompts',
   getParentRoute: () => GestaoRoute,
 } as any)
+const GestaoLinksRoute = GestaoLinksRouteImport.update({
+  id: '/links',
+  path: '/links',
+  getParentRoute: () => GestaoRoute,
+} as any)
 const FinanceiroPagamentosRecorrentesRoute =
   FinanceiroPagamentosRecorrentesRouteImport.update({
     id: '/pagamentos-recorrentes',
     path: '/pagamentos-recorrentes',
     getParentRoute: () => FinanceiroRoute,
   } as any)
+const FinanceiroLinksRoute = FinanceiroLinksRouteImport.update({
+  id: '/links',
+  path: '/links',
+  getParentRoute: () => FinanceiroRoute,
+} as any)
 const ConsultorioModelosDocumentosRoute =
   ConsultorioModelosDocumentosRouteImport.update({
     id: '/modelos-documentos',
     path: '/modelos-documentos',
     getParentRoute: () => ConsultorioRoute,
   } as any)
+const ConsultorioLinksRoute = ConsultorioLinksRouteImport.update({
+  id: '/links',
+  path: '/links',
+  getParentRoute: () => ConsultorioRoute,
+} as any)
 const ConsultorioFichaPlanejamentoRoute =
   ConsultorioFichaPlanejamentoRouteImport.update({
     id: '/ficha-planejamento',
@@ -154,8 +172,11 @@ export interface FileRoutesByFullPath {
   '/unlock': typeof UnlockRoute
   '/$area/links': typeof AreaLinksRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
+  '/consultorio/links': typeof ConsultorioLinksRoute
   '/consultorio/modelos-documentos': typeof ConsultorioModelosDocumentosRoute
+  '/financeiro/links': typeof FinanceiroLinksRoute
   '/financeiro/pagamentos-recorrentes': typeof FinanceiroPagamentosRecorrentesRoute
+  '/gestao/links': typeof GestaoLinksRoute
   '/gestao/prompts': typeof GestaoPromptsRoute
   '/gestao/rotina': typeof GestaoRotinaRoute
   '/gestao/tarefas-recorrentes': typeof GestaoTarefasRecorrentesRoute
@@ -173,8 +194,11 @@ export interface FileRoutesByTo {
   '/unlock': typeof UnlockRoute
   '/$area/links': typeof AreaLinksRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
+  '/consultorio/links': typeof ConsultorioLinksRoute
   '/consultorio/modelos-documentos': typeof ConsultorioModelosDocumentosRoute
+  '/financeiro/links': typeof FinanceiroLinksRoute
   '/financeiro/pagamentos-recorrentes': typeof FinanceiroPagamentosRecorrentesRoute
+  '/gestao/links': typeof GestaoLinksRoute
   '/gestao/prompts': typeof GestaoPromptsRoute
   '/gestao/rotina': typeof GestaoRotinaRoute
   '/gestao/tarefas-recorrentes': typeof GestaoTarefasRecorrentesRoute
@@ -197,8 +221,11 @@ export interface FileRoutesById {
   '/unlock': typeof UnlockRoute
   '/$area/links': typeof AreaLinksRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
+  '/consultorio/links': typeof ConsultorioLinksRoute
   '/consultorio/modelos-documentos': typeof ConsultorioModelosDocumentosRoute
+  '/financeiro/links': typeof FinanceiroLinksRoute
   '/financeiro/pagamentos-recorrentes': typeof FinanceiroPagamentosRecorrentesRoute
+  '/gestao/links': typeof GestaoLinksRoute
   '/gestao/prompts': typeof GestaoPromptsRoute
   '/gestao/rotina': typeof GestaoRotinaRoute
   '/gestao/tarefas-recorrentes': typeof GestaoTarefasRecorrentesRoute
@@ -222,8 +249,11 @@ export interface FileRouteTypes {
     | '/unlock'
     | '/$area/links'
     | '/consultorio/ficha-planejamento'
+    | '/consultorio/links'
     | '/consultorio/modelos-documentos'
+    | '/financeiro/links'
     | '/financeiro/pagamentos-recorrentes'
+    | '/gestao/links'
     | '/gestao/prompts'
     | '/gestao/rotina'
     | '/gestao/tarefas-recorrentes'
@@ -241,8 +271,11 @@ export interface FileRouteTypes {
     | '/unlock'
     | '/$area/links'
     | '/consultorio/ficha-planejamento'
+    | '/consultorio/links'
     | '/consultorio/modelos-documentos'
+    | '/financeiro/links'
     | '/financeiro/pagamentos-recorrentes'
+    | '/gestao/links'
     | '/gestao/prompts'
     | '/gestao/rotina'
     | '/gestao/tarefas-recorrentes'
@@ -264,8 +297,11 @@ export interface FileRouteTypes {
     | '/unlock'
     | '/$area/links'
     | '/consultorio/ficha-planejamento'
+    | '/consultorio/links'
     | '/consultorio/modelos-documentos'
+    | '/financeiro/links'
     | '/financeiro/pagamentos-recorrentes'
+    | '/gestao/links'
     | '/gestao/prompts'
     | '/gestao/rotina'
     | '/gestao/tarefas-recorrentes'
@@ -397,6 +433,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GestaoPromptsRouteImport
       parentRoute: typeof GestaoRoute
     }
+    '/gestao/links': {
+      id: '/gestao/links'
+      path: '/links'
+      fullPath: '/gestao/links'
+      preLoaderRoute: typeof GestaoLinksRouteImport
+      parentRoute: typeof GestaoRoute
+    }
     '/financeiro/pagamentos-recorrentes': {
       id: '/financeiro/pagamentos-recorrentes'
       path: '/pagamentos-recorrentes'
@@ -404,11 +447,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FinanceiroPagamentosRecorrentesRouteImport
       parentRoute: typeof FinanceiroRoute
     }
+    '/financeiro/links': {
+      id: '/financeiro/links'
+      path: '/links'
+      fullPath: '/financeiro/links'
+      preLoaderRoute: typeof FinanceiroLinksRouteImport
+      parentRoute: typeof FinanceiroRoute
+    }
     '/consultorio/modelos-documentos': {
       id: '/consultorio/modelos-documentos'
       path: '/modelos-documentos'
       fullPath: '/consultorio/modelos-documentos'
       preLoaderRoute: typeof ConsultorioModelosDocumentosRouteImport
+      parentRoute: typeof ConsultorioRoute
+    }
+    '/consultorio/links': {
+      id: '/consultorio/links'
+      path: '/links'
+      fullPath: '/consultorio/links'
+      preLoaderRoute: typeof ConsultorioLinksRouteImport
       parentRoute: typeof ConsultorioRoute
     }
     '/consultorio/ficha-planejamento': {
@@ -456,12 +513,14 @@ const AreaRouteWithChildren = AreaRoute._addFileChildren(AreaRouteChildren)
 
 interface ConsultorioRouteChildren {
   ConsultorioFichaPlanejamentoRoute: typeof ConsultorioFichaPlanejamentoRoute
+  ConsultorioLinksRoute: typeof ConsultorioLinksRoute
   ConsultorioModelosDocumentosRoute: typeof ConsultorioModelosDocumentosRoute
   ConsultorioIndexRoute: typeof ConsultorioIndexRoute
 }
 
 const ConsultorioRouteChildren: ConsultorioRouteChildren = {
   ConsultorioFichaPlanejamentoRoute: ConsultorioFichaPlanejamentoRoute,
+  ConsultorioLinksRoute: ConsultorioLinksRoute,
   ConsultorioModelosDocumentosRoute: ConsultorioModelosDocumentosRoute,
   ConsultorioIndexRoute: ConsultorioIndexRoute,
 }
@@ -471,11 +530,13 @@ const ConsultorioRouteWithChildren = ConsultorioRoute._addFileChildren(
 )
 
 interface FinanceiroRouteChildren {
+  FinanceiroLinksRoute: typeof FinanceiroLinksRoute
   FinanceiroPagamentosRecorrentesRoute: typeof FinanceiroPagamentosRecorrentesRoute
   FinanceiroIndexRoute: typeof FinanceiroIndexRoute
 }
 
 const FinanceiroRouteChildren: FinanceiroRouteChildren = {
+  FinanceiroLinksRoute: FinanceiroLinksRoute,
   FinanceiroPagamentosRecorrentesRoute: FinanceiroPagamentosRecorrentesRoute,
   FinanceiroIndexRoute: FinanceiroIndexRoute,
 }
@@ -485,6 +546,7 @@ const FinanceiroRouteWithChildren = FinanceiroRoute._addFileChildren(
 )
 
 interface GestaoRouteChildren {
+  GestaoLinksRoute: typeof GestaoLinksRoute
   GestaoPromptsRoute: typeof GestaoPromptsRoute
   GestaoRotinaRoute: typeof GestaoRotinaRoute
   GestaoTarefasRecorrentesRoute: typeof GestaoTarefasRecorrentesRoute
@@ -492,6 +554,7 @@ interface GestaoRouteChildren {
 }
 
 const GestaoRouteChildren: GestaoRouteChildren = {
+  GestaoLinksRoute: GestaoLinksRoute,
   GestaoPromptsRoute: GestaoPromptsRoute,
   GestaoRotinaRoute: GestaoRotinaRoute,
   GestaoTarefasRecorrentesRoute: GestaoTarefasRecorrentesRoute,
