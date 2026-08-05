@@ -65,7 +65,7 @@ function RotinaPage() {
     queryFn: async () => {
       const data = await getRotinaCards();
       if (data && data.length === 0) {
-        await restoreDefaultRotina({ cards: ROTINA_DEFAULTS as any[] });
+        await restoreDefaultRotina({ data: { cards: ROTINA_DEFAULTS as any[] } });
         return getRotinaCards();
       }
       return data;
