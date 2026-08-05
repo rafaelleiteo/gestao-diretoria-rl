@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Copy, Check, Plus, X } from "lucide-react";
+import { Copy, Check, Plus, X, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/gestao/prompts")({
@@ -30,6 +30,7 @@ function PromptsPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
   const [texto, setTexto] = useState("");
@@ -46,23 +47,63 @@ function PromptsPage() {
     },
   });
 
-  const createMut = useMutation({
+  const saveMut = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("prompts").insert({
-        titulo: titulo.trim(),
-        descricao: descricao.trim() || null,
-        texto: texto.trim(),
-      });
-      if (error) throw error;
+      if (editingId) {
+        const { error } = await supabase
+          .from("prompts")
+          .update({
+            titulo: titulo.trim(),
+            descricao: descricao.trim() || null,
+            texto: texto.trim(),
+          })
+          .eq("id", editingId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("prompts").insert({
+          titulo: titulo.trim(),
+          descricao: descricao.trim() || null,
+          texto: texto.trim(),
+        });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       setTitulo("");
       setDescricao("");
       setTexto("");
       setShowForm(false);
+      setEditingId(null);
       qc.invalidateQueries({ queryKey: ["prompts"] });
     },
   });
+
+  const deleteMut = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("prompts").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["prompts"] });
+    },
+  });
+
+  const startEdit = (p: Prompt) => {
+    setEditingId(p.id);
+    setTitulo(p.titulo);
+    setDescricao(p.descricao ?? "");
+    setTexto(p.texto);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const cancelForm = () => {
+    setShowForm(false);
+    setEditingId(null);
+    setTitulo("");
+    setDescricao("");
+    setTexto("");
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -91,7 +132,10 @@ function PromptsPage() {
           </p>
         </div>
         <button
-          onClick={() => setShowForm((v) => !v)}
+          onClick={() => {
+            if (showForm) cancelForm();
+            else setShowForm(true);
+          }}
           className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-medium text-white transition-opacity hover:opacity-90"
           style={{ backgroundColor: "#4F46E5" }}
         >
@@ -130,12 +174,12 @@ function PromptsPage() {
             />
             <div className="flex justify-end">
               <button
-                disabled={!canSave || createMut.isPending}
-                onClick={() => createMut.mutate()}
+                disabled={!canSave || saveMut.isPending}
+                onClick={() => saveMut.mutate()}
                 className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 style={{ backgroundColor: "#4F46E5" }}
               >
-                {createMut.isPending ? "Salvando..." : "Salvar prompt"}
+                {saveMut.isPending ? "Salvando..." : editingId ? "Salvar alterações" : "Salvar prompt"}
               </button>
             </div>
           </div>
@@ -164,14 +208,33 @@ function PromptsPage() {
               : "Nenhum prompt encontrado para essa busca."}
           </p>
         ) : (
-          filtered.map((p) => <PromptCard key={p.id} prompt={p} />)
+          filtered.map((p) => (
+            <PromptCard
+              key={p.id}
+              prompt={p}
+              onEdit={() => startEdit(p)}
+              onDelete={() => {
+                if (confirm(`Excluir o prompt "${p.titulo}"?`)) {
+                  deleteMut.mutate(p.id);
+                }
+              }}
+            />
+          ))
         )}
       </div>
     </div>
   );
 }
 
-function PromptCard({ prompt }: { prompt: Prompt }) {
+function PromptCard({
+  prompt,
+  onEdit,
+  onDelete,
+}: {
+  prompt: Prompt;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -207,23 +270,41 @@ function PromptCard({ prompt }: { prompt: Prompt }) {
             </p>
           )}
         </div>
-        <button
-          onClick={handleCopy}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: copied ? "#10B981" : "#4F46E5" }}
-        >
-          {copied ? (
-            <>
-              <Check className="h-3.5 w-3.5" />
-              Copiado
-            </>
-          ) : (
-            <>
-              <Copy className="h-3.5 w-3.5" />
-              Copiar
-            </>
-          )}
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            onClick={onEdit}
+            className="rounded-full p-2 transition-colors hover:bg-[#FAFAFA]"
+            style={{ color: "#6B7280" }}
+            title="Editar prompt"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={onDelete}
+            className="rounded-full p-2 transition-colors hover:bg-[#FAFAFA] hover:text-red-500"
+            style={{ color: "#6B7280" }}
+            title="Excluir prompt"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={handleCopy}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: copied ? "#10B981" : "#4F46E5" }}
+          >
+            {copied ? (
+              <>
+                <Check className="h-3.5 w-3.5" />
+                Copiado
+              </>
+            ) : (
+              <>
+                <Copy className="h-3.5 w-3.5" />
+                Copiar
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       <div
