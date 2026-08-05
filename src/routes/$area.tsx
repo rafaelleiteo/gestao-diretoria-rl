@@ -1,8 +1,10 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, Outlet } from "@tanstack/react-router";
 import { TAB_AREAS, type TabArea } from "@/lib/areas";
 import { InboxList } from "@/components/Inbox";
 import { AreaSummary } from "@/components/InboxSummary";
 import { TarefasRecorrentesModule } from "@/components/TarefasRecorrentes";
+import { AreaSidebarLayout, type SidebarMenuItem } from "@/components/AreaSidebar";
+import { Inbox as InboxIcon, Link as LinkIcon } from "lucide-react";
 
 export const Route = createFileRoute("/$area")({
   loader: ({ params }) => {
@@ -21,7 +23,7 @@ export const Route = createFileRoute("/$area")({
       ],
     };
   },
-  component: AreaPage,
+  component: AreaLayout,
   notFoundComponent: () => (
     <div className="mx-auto max-w-3xl px-6 py-16 text-center">
       <h1 className="text-2xl font-bold" style={{ color: "#111111" }}>
@@ -31,7 +33,31 @@ export const Route = createFileRoute("/$area")({
   ),
 });
 
-function AreaPage() {
+function AreaLayout() {
+  const { area } = Route.useLoaderData();
+  const slug = area.slug as TabArea;
+
+  const menu: SidebarMenuItem[] = [
+    { to: `/${slug}`, label: "Visão Geral", icon: InboxIcon, exact: true },
+    { to: `/${slug}/links`, label: "Links", icon: LinkIcon },
+  ];
+
+  // Specific areas might have their own layouts defined in separate files (consultorio.tsx, gestao.tsx, financeiro.tsx)
+  // For other areas, we provide this default sidebar layout
+  const hasCustomLayout = ["consultorio", "gestao", "financeiro"].includes(slug);
+
+  if (hasCustomLayout) {
+    return <Outlet />;
+  }
+
+  return (
+    <AreaSidebarLayout title={area.label} menu={menu}>
+      <Outlet />
+    </AreaSidebarLayout>
+  );
+}
+
+export function AreaIndexPage() {
   const { area } = Route.useLoaderData();
   const slug = area.slug as TabArea;
 

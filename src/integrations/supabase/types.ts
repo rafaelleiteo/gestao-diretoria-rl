@@ -119,6 +119,30 @@ export type Database = {
         }
         Relationships: []
       }
+      links_rapidos: {
+        Row: {
+          area: string
+          criado_em: string | null
+          id: string
+          titulo: string
+          url: string
+        }
+        Insert: {
+          area: string
+          criado_em?: string | null
+          id?: string
+          titulo: string
+          url: string
+        }
+        Update: {
+          area?: string
+          criado_em?: string | null
+          id?: string
+          titulo?: string
+          url?: string
+        }
+        Relationships: []
+      }
       pagamentos_recorrentes: {
         Row: {
           criado_em: string

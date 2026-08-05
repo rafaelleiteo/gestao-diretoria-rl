@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { FileText, FileSignature, Inbox as InboxIcon } from "lucide-react";
+import { FileText, FileSignature, Inbox as InboxIcon, Link as LinkIcon } from "lucide-react";
 import { AreaSidebarLayout, type SidebarMenuItem } from "@/components/AreaSidebar";
 
 export const Route = createFileRoute("/consultorio")({
@@ -18,6 +18,7 @@ const MENU: SidebarMenuItem[] = [
   { to: "/consultorio", label: "Visão Geral", icon: InboxIcon, exact: true },
   { to: "/consultorio/ficha-planejamento", label: "Ficha de Planejamento", icon: FileText },
   { to: "/consultorio/modelos-documentos", label: "Modelos de Documentos", icon: FileSignature },
+  { to: "/consultorio/links", label: "Links", icon: LinkIcon },
 ];
 
 function ConsultorioLayout() {
