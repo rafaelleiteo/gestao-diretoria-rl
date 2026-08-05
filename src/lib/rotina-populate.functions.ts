@@ -1,13 +1,25 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { z } from "zod";
 
 export const populateRotinaDefaults = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { cards: any[] } }) => {
+  .validator((data: any) => z.object({
+    cards: z.array(z.object({
+      tab: z.string(),
+      coluna: z.string(),
+      area: z.string().nullable(),
+      tipo_linha: z.string(),
+      texto: z.string(),
+      concluido: z.boolean(),
+      ordem: z.number()
+    }))
+  }).parse(data))
+  .handler(async ({ data }) => {
     // 1. Delete all existing records
     const { error: delError } = await supabaseAdmin
       .from("rotina_cards")
       .delete()
-      .neq("id", "00000000-0000-0000-0000-000000000000"); // Match all
+      .not("id", "is", null); // Correct way to match all rows
 
     if (delError) throw delError;
 
@@ -15,15 +27,7 @@ export const populateRotinaDefaults = createServerFn({ method: "POST" })
     if (data.cards && data.cards.length > 0) {
       const { error: insError } = await supabaseAdmin
         .from("rotina_cards")
-        .insert(data.cards.map(c => ({
-          tab: c.tab,
-          coluna: c.coluna,
-          area: c.area,
-          tipo_linha: c.tipo_linha,
-          texto: c.texto,
-          concluido: c.concluido,
-          ordem: c.ordem
-        })));
+        .insert(data.cards);
       if (insError) throw insError;
     }
     
