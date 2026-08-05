@@ -196,6 +196,34 @@ export const acceptInvite = createServerFn({ method: "POST" })
 
     if (insertError) throw insertError;
 
+    // 3b. Copy invite permissions to the new user, then clean them up
+    const { data: convitePerms, error: permsError } = await supabaseAdmin
+      .from("permissoes_convite" as any)
+      .select("area, item_menu")
+      .eq("convite_id", convite.id);
+
+    if (permsError) throw permsError;
+
+    if (convitePerms && convitePerms.length > 0) {
+      const { error: copyError } = await supabaseAdmin
+        .from("permissoes_usuario" as any)
+        .insert(
+          (convitePerms as any[]).map((p) => ({
+            usuario_id: user.id,
+            area: p.area,
+            item_menu: p.item_menu,
+          }))
+        );
+      if (copyError) throw copyError;
+
+      await supabaseAdmin
+        .from("permissoes_convite" as any)
+        .delete()
+        .eq("convite_id", convite.id);
+    }
+
+
+
     // 4. Mark invite as used
     const { error: updateError } = await supabaseAdmin
       .from("convites")
