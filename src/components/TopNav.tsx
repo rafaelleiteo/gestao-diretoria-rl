@@ -5,9 +5,11 @@ import { TAB_AREAS } from "@/lib/areas";
 import { lockSite } from "@/lib/gate.functions";
 import { getCurrentUser, listUsers, inviteUser, deleteUser, deleteInvite } from "@/lib/auth.functions";
 import { getPermissions, savePermissions, getMyPermissions } from "@/lib/permissions.functions";
-import { Users, X, Copy, Trash2, Plus, ShieldCheck, CheckSquare, Square } from "lucide-react";
+import { Users, X, Copy, Trash2, Plus, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { PermissionsPanel, togglePermission, type Permission } from "@/components/PermissionsPanel";
+
 
 
 
