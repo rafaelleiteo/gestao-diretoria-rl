@@ -18,6 +18,7 @@ const MENU: SidebarMenuItem[] = [
   { to: "/consultorio", label: "Visão Geral", icon: InboxIcon, exact: true },
   { to: "/consultorio/ficha-planejamento", label: "Ficha de Planejamento", icon: FileText },
   { to: "/consultorio/modelos-documentos", label: "Modelos de Documentos", icon: FileSignature },
+  { to: "/consultorio/protocolos", label: "Protocolos", icon: FileText },
   { to: "/consultorio/links", label: "Links", icon: LinkIcon },
 ];
 

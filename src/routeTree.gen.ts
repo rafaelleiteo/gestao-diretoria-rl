@@ -28,6 +28,7 @@ import { Route as GestaoPromptsRouteImport } from './routes/gestao.prompts'
 import { Route as GestaoLinksRouteImport } from './routes/gestao.links'
 import { Route as FinanceiroPagamentosRecorrentesRouteImport } from './routes/financeiro.pagamentos-recorrentes'
 import { Route as FinanceiroLinksRouteImport } from './routes/financeiro.links'
+import { Route as ConsultorioProtocolosRouteImport } from './routes/consultorio.protocolos'
 import { Route as ConsultorioModelosDocumentosRouteImport } from './routes/consultorio.modelos-documentos'
 import { Route as ConsultorioLinksRouteImport } from './routes/consultorio.links'
 import { Route as ConsultorioFichaPlanejamentoRouteImport } from './routes/consultorio.ficha-planejamento'
@@ -133,6 +134,11 @@ const FinanceiroLinksRoute = FinanceiroLinksRouteImport.update({
   path: '/links',
   getParentRoute: () => FinanceiroRoute,
 } as any)
+const ConsultorioProtocolosRoute = ConsultorioProtocolosRouteImport.update({
+  id: '/protocolos',
+  path: '/protocolos',
+  getParentRoute: () => ConsultorioRoute,
+} as any)
 const ConsultorioModelosDocumentosRoute =
   ConsultorioModelosDocumentosRouteImport.update({
     id: '/modelos-documentos',
@@ -181,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/consultorio/links': typeof ConsultorioLinksRoute
   '/consultorio/modelos-documentos': typeof ConsultorioModelosDocumentosRoute
+  '/consultorio/protocolos': typeof ConsultorioProtocolosRoute
   '/financeiro/links': typeof FinanceiroLinksRoute
   '/financeiro/pagamentos-recorrentes': typeof FinanceiroPagamentosRecorrentesRoute
   '/gestao/links': typeof GestaoLinksRoute
@@ -204,6 +211,7 @@ export interface FileRoutesByTo {
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/consultorio/links': typeof ConsultorioLinksRoute
   '/consultorio/modelos-documentos': typeof ConsultorioModelosDocumentosRoute
+  '/consultorio/protocolos': typeof ConsultorioProtocolosRoute
   '/financeiro/links': typeof FinanceiroLinksRoute
   '/financeiro/pagamentos-recorrentes': typeof FinanceiroPagamentosRecorrentesRoute
   '/gestao/links': typeof GestaoLinksRoute
@@ -232,6 +240,7 @@ export interface FileRoutesById {
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/consultorio/links': typeof ConsultorioLinksRoute
   '/consultorio/modelos-documentos': typeof ConsultorioModelosDocumentosRoute
+  '/consultorio/protocolos': typeof ConsultorioProtocolosRoute
   '/financeiro/links': typeof FinanceiroLinksRoute
   '/financeiro/pagamentos-recorrentes': typeof FinanceiroPagamentosRecorrentesRoute
   '/gestao/links': typeof GestaoLinksRoute
@@ -261,6 +270,7 @@ export interface FileRouteTypes {
     | '/consultorio/ficha-planejamento'
     | '/consultorio/links'
     | '/consultorio/modelos-documentos'
+    | '/consultorio/protocolos'
     | '/financeiro/links'
     | '/financeiro/pagamentos-recorrentes'
     | '/gestao/links'
@@ -284,6 +294,7 @@ export interface FileRouteTypes {
     | '/consultorio/ficha-planejamento'
     | '/consultorio/links'
     | '/consultorio/modelos-documentos'
+    | '/consultorio/protocolos'
     | '/financeiro/links'
     | '/financeiro/pagamentos-recorrentes'
     | '/gestao/links'
@@ -311,6 +322,7 @@ export interface FileRouteTypes {
     | '/consultorio/ficha-planejamento'
     | '/consultorio/links'
     | '/consultorio/modelos-documentos'
+    | '/consultorio/protocolos'
     | '/financeiro/links'
     | '/financeiro/pagamentos-recorrentes'
     | '/gestao/links'
@@ -474,6 +486,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FinanceiroLinksRouteImport
       parentRoute: typeof FinanceiroRoute
     }
+    '/consultorio/protocolos': {
+      id: '/consultorio/protocolos'
+      path: '/protocolos'
+      fullPath: '/consultorio/protocolos'
+      preLoaderRoute: typeof ConsultorioProtocolosRouteImport
+      parentRoute: typeof ConsultorioRoute
+    }
     '/consultorio/modelos-documentos': {
       id: '/consultorio/modelos-documentos'
       path: '/modelos-documentos'
@@ -535,6 +554,7 @@ interface ConsultorioRouteChildren {
   ConsultorioFichaPlanejamentoRoute: typeof ConsultorioFichaPlanejamentoRoute
   ConsultorioLinksRoute: typeof ConsultorioLinksRoute
   ConsultorioModelosDocumentosRoute: typeof ConsultorioModelosDocumentosRoute
+  ConsultorioProtocolosRoute: typeof ConsultorioProtocolosRoute
   ConsultorioIndexRoute: typeof ConsultorioIndexRoute
 }
 
@@ -542,6 +562,7 @@ const ConsultorioRouteChildren: ConsultorioRouteChildren = {
   ConsultorioFichaPlanejamentoRoute: ConsultorioFichaPlanejamentoRoute,
   ConsultorioLinksRoute: ConsultorioLinksRoute,
   ConsultorioModelosDocumentosRoute: ConsultorioModelosDocumentosRoute,
+  ConsultorioProtocolosRoute: ConsultorioProtocolosRoute,
   ConsultorioIndexRoute: ConsultorioIndexRoute,
 }
 
@@ -602,13 +623,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
