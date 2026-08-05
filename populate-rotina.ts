@@ -1,4 +1,4 @@
-import { populateRotinaDefaults } from "./src/lib/rotina-populate.functions.ts";
+import { supabaseAdmin } from "./src/integrations/supabase/client.server";
 
 const rawData = `
 distribuir | ideias | card | Gestão | Estudar uma palavra em inglês | false
@@ -287,12 +287,31 @@ rawData.trim().split('\n').forEach(line => {
 });
 
 async function run() {
-  console.log(`Populating ${cards.length} cards...`);
+  console.log(\`Populating \${cards.length} cards...\`);
   try {
-    const result = await populateRotinaDefaults({ data: { cards } });
-    console.log("Success:", result);
+    // 1. Delete all existing records
+    const { error: delError } = await supabaseAdmin
+      .from("rotina_cards")
+      .delete()
+      .not("id", "is", null);
+
+    if (delError) throw delError;
+
+    // 2. Insert new records in batches of 50 to avoid any size limits
+    const batchSize = 50;
+    for (let i = 0; i < cards.length; i += batchSize) {
+      const batch = cards.slice(i, i + batchSize);
+      const { error: insError } = await supabaseAdmin
+        .from("rotina_cards")
+        .insert(batch);
+      if (insError) throw insError;
+      console.log(\`Inserted batch \${i / batchSize + 1}\`);
+    }
+    
+    console.log("Success!");
   } catch (err) {
     console.error("Error:", err);
+    process.exit(1);
   }
 }
 
