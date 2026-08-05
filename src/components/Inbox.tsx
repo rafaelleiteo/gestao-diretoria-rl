@@ -862,6 +862,22 @@ function ItemCard({
             </span>
           )}
         </div>
+        <button
+          type="button"
+          onPointerDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (confirm("Excluir este item?")) {
+              supabase.from("inbox_items").delete().eq("id", item.id).then(() => {
+                qc.invalidateQueries({ queryKey: ["inbox_items"] });
+              });
+            }
+          }}
+          className="p-1.5 text-[#B0B4BC] hover:text-[#B91C1C] transition-colors rounded-lg hover:bg-[#FEE2E2]/50 self-start"
+          title="Excluir"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
       </div>
     </li>
   );
