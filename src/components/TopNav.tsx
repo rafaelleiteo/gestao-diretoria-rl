@@ -17,6 +17,7 @@ export function TopNav() {
 
   const [user, setUser] = useState<any>(null);
   const [myPermissions, setMyPermissions] = useState<any[]>([]);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [showUsersModal, setShowUsersModal] = useState(false);
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -37,8 +38,10 @@ export function TopNav() {
   const remove = useServerFn(deleteUser);
 
   useEffect(() => {
-    fetchCurrentUser().then(setUser);
-    fetchMyPermissions().then(setMyPermissions);
+    Promise.all([
+      fetchCurrentUser().then(setUser),
+      fetchMyPermissions().then(setMyPermissions)
+    ]).finally(() => setIsLoadingUser(false));
   }, [fetchCurrentUser, fetchMyPermissions]);
 
   useEffect(() => {
@@ -48,6 +51,7 @@ export function TopNav() {
   }, [showUsersModal, fetchUsers]);
 
   const canAccessArea = (areaSlug: string) => {
+    if (isLoadingUser) return false;
     if (!user) return false;
     if (user.role === "admin") return true;
     return myPermissions.some(p => p.area === areaSlug);
