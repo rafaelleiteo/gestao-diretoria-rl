@@ -116,7 +116,6 @@ export function TarefasRecorrentesMensal() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Formulário Adicionar Item */}
       <div className="rounded-2xl border bg-white p-5" style={{ borderColor: "#EDEDED" }}>
         {!isAdding ? (
           <button
@@ -174,7 +173,6 @@ export function TarefasRecorrentesMensal() {
         )}
       </div>
 
-      {/* Grade Mensal */}
       {!items || items.length === 0 ? (
         <div className="rounded-2xl border py-10 text-center text-[13px] text-[#B0B4BC]" style={{ borderColor: "#EDEDED" }}>
           Nenhuma tarefa recorrente mensal cadastrada.
@@ -215,7 +213,7 @@ export function TarefasRecorrentesMensal() {
               </tr>
             </thead>
             <tbody>
-              {items.map((item) => (
+              {(items || []).map((item) => (
                 <tr key={item.id}>
                   <th
                     scope="row"
