@@ -42,7 +42,7 @@ function ProtocolosPage() {
     queryKey: ["protocolos"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("protocolos")
+        .from("protocolos" as any)
         .select("*")
         .order("criado_em", { ascending: false });
       if (error) throw error;
@@ -61,12 +61,12 @@ function ProtocolosPage() {
 
       if (editingId) {
         const { error } = await supabase
-          .from("protocolos")
+          .from("protocolos" as any)
           .update(payload)
           .eq("id", editingId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("protocolos").insert(payload);
+        const { error } = await supabase.from("protocolos" as any).insert(payload);
         if (error) throw error;
       }
     },
@@ -78,7 +78,7 @@ function ProtocolosPage() {
 
   const deleteMut = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("protocolos").delete().eq("id", id);
+      const { error } = await supabase.from("protocolos" as any).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
