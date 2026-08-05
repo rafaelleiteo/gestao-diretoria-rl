@@ -57,7 +57,14 @@ export function TopNav() {
   }, [user, myPermissions]);
 
 
+  useEffect(() => {
+    if (showUsersModal) {
+      fetchUsers().then(setUsers);
+    }
+  }, [showUsersModal, fetchUsers]);
+
   async function onLogout() {
+
     await lock();
     await router.invalidate();
     await router.navigate({ to: "/unlock" });
