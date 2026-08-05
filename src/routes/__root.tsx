@@ -114,7 +114,9 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", backgroundColor: "#FFFFFF", color: "#111111" }}>
         {children}
+        <Toaster />
         <Scripts />
+
       </body>
     </html>
   );
