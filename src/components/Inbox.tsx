@@ -865,8 +865,7 @@ function ItemCard({
         </div>
         <button
           type="button"
-          onPointerDown={(e) => {
-            e.preventDefault();
+          onClick={(e) => {
             e.stopPropagation();
             if (confirm("Excluir este item?")) {
               supabase.from("inbox_items").delete().eq("id", item.id).then(() => {

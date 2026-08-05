@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { TAB_AREAS, ALL_AREA_OPTIONS, type AreaValue } from "@/lib/areas";
 import { PRIORIDADE_FILTER_OPTIONS, type Prioridade, type Tipo } from "@/components/Inbox";
 import { HomeFilterSidebarLayout } from "@/components/HomeFilterSidebar";
@@ -82,14 +83,16 @@ function EnvioEmLote() {
         // Tipo
         let tipo: Tipo = "tarefa";
         if (parts[2]) {
-          const matchedType = validTypes.find(
-            (t) => t === parts[2].toLowerCase()
-          );
+          const typeInput = parts[2].toLowerCase();
+          const matchedType = validTypes.find((t) => t === typeInput);
           if (matchedType) {
             tipo = matchedType as Tipo;
           } else {
             appliedFallbacks.push(`Tipo: "${parts[2]}" não encontrado (usando Tarefa)`);
           }
+        } else {
+          // Explicitly fallback to "tarefa" if empty, as per rules
+          tipo = "tarefa";
         }
 
         // Prioridade
@@ -134,6 +137,9 @@ function EnvioEmLote() {
 
       return results;
     },
+    onError: (err: any) => {
+      toast.error(`Erro ao processar lote: ${err.message || "Erro desconhecido"}`);
+    },
     onSuccess: (res) => {
       setResult(res);
       setText("");
@@ -142,7 +148,7 @@ function EnvioEmLote() {
   });
 
   const handleProcess = () => {
-    if (!text.trim() || processMutation.isPending) return;
+    if (processMutation.isPending) return;
     const lines = text.split("\n");
     processMutation.mutate(lines);
   };
@@ -204,7 +210,7 @@ function EnvioEmLote() {
           <div className="mt-4 flex justify-end">
             <button
               onClick={handleProcess}
-              disabled={!text.trim() || processMutation.isPending}
+              disabled={processMutation.isPending}
               className="rounded-full px-6 py-2.5 text-[14px] font-semibold text-white transition-opacity disabled:opacity-40"
               style={{ backgroundColor: "#4F46E5" }}
             >
