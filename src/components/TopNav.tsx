@@ -409,7 +409,7 @@ export function TopNav() {
                       
                       {u.id !== user?.id && (
                         <>
-                          {u.role === "colaborador" && (
+                          {u.role === "colaborador" && !u.isConvite && (
                             <button
                               onClick={() => onOpenPermissions(u)}
                               className="flex h-8 w-8 items-center justify-center rounded-full border text-[#6B7280] hover:bg-white"
