@@ -438,6 +438,48 @@ export function TopNav() {
         </div>
       )}
 
+      {showPermissionsModal && selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm px-4">
+          <div className="w-full max-w-2xl overflow-hidden rounded-2xl border bg-white shadow-xl" style={{ borderColor: "#EDEDED" }}>
+            <div className="flex items-center justify-between border-b px-6 py-4" style={{ borderColor: "#EDEDED" }}>
+              <h2 className="text-lg font-bold tracking-tight" style={{ color: "#111111" }}>
+                Permissões — {selectedUser.nome}
+              </h2>
+              <button onClick={() => setShowPermissionsModal(false)} className="text-[#6B7280] hover:text-[#111111]">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] overflow-y-auto p-6">
+              <PermissionsPanel
+                permissions={userPermissions as Permission[]}
+                onToggle={onTogglePermission}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 border-t px-6 py-4" style={{ borderColor: "#EDEDED" }}>
+              <button
+                type="button"
+                onClick={() => setShowPermissionsModal(false)}
+                className="rounded-full px-4 py-1.5 text-[12px] font-medium text-[#6B7280]"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={onSavePermissions}
+                disabled={submitting}
+                className="rounded-full px-4 py-1.5 text-[12px] font-semibold text-white disabled:opacity-50"
+                style={{ backgroundColor: "#4F46E5" }}
+              >
+                {submitting ? "Salvando..." : "Salvar permissões"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
     </header>
   );
 }
