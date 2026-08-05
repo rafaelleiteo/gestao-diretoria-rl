@@ -15,17 +15,12 @@ import {
   Circle, 
   Plus, 
   X, 
-  MoreVertical, 
   Download, 
   RotateCcw,
-  LayoutGrid,
-  CalendarDays,
-  ChevronRight,
-  ChevronLeft
+  CalendarDays
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { 
   Select, 
   SelectContent, 
@@ -37,28 +32,8 @@ import {
   Dialog, 
   DialogContent, 
   DialogHeader, 
-  DialogTitle, 
-  DialogTrigger,
-  DialogFooter
+  DialogTitle
 } from "@/components/ui/dialog";
-import { 
-  DndContext, 
-  closestCenter, 
-  KeyboardSensor, 
-  PointerSensor, 
-  useSensor, 
-  useSensors,
-  DragOverlay,
-  defaultDropAnimationSideEffects
-} from '@dnd-kit/core';
-import { 
-  arrayMove, 
-  SortableContext, 
-  sortableKeyboardCoordinates, 
-  verticalListSortingStrategy,
-  useSortable
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/gestao/rotina")({
@@ -85,14 +60,12 @@ function RotinaPage() {
 
   const queryClient = useQueryClient();
 
-  const { data: cards = [], isLoading } = useQuery({
+  const { data: cards = [] } = useQuery({
     queryKey: ['rotina_cards'],
     queryFn: async () => {
       const data = await getRotinaCards();
-      // Auto-seed if empty
       if (data && data.length === 0) {
-        console.log("Seeding default routine cards...");
-        await restoreDefaultRotina({ cards: ROTINA_DEFAULTS });
+        await restoreDefaultRotina({ cards: ROTINA_DEFAULTS as any[] });
         return getRotinaCards();
       }
       return data;
@@ -100,7 +73,7 @@ function RotinaPage() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: saveRotinaCard,
+    mutationFn: (data: any) => saveRotinaCard({ data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rotina_cards'] });
       toast.success("Card salvo");
@@ -108,7 +81,7 @@ function RotinaPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteRotinaCard,
+    mutationFn: (id: string) => deleteRotinaCard({ data: { id } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rotina_cards'] });
       toast.success("Card removido");
@@ -116,14 +89,14 @@ function RotinaPage() {
   });
 
   const batchMutation = useMutation({
-    mutationFn: batchUpdateRotinaCards,
+    mutationFn: (data: any[]) => batchUpdateRotinaCards({ data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rotina_cards'] });
     }
   });
 
   const restoreMutation = useMutation({
-    mutationFn: restoreDefaultRotina,
+    mutationFn: (payload: any) => restoreDefaultRotina({ data: payload }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rotina_cards'] });
       toast.success("Conteúdo restaurado para o padrão");
@@ -131,12 +104,13 @@ function RotinaPage() {
   });
 
   const handleToggleConcluido = (card: any) => {
-    saveMutation.mutate({ ...card, concluido: !card.concluido });
+    const { id, criado_em, ...rest } = card;
+    saveMutation.mutate({ ...rest, id, concluido: !card.concluido });
   };
 
   const handleAddCard = (tab: RotinaTab, coluna: string, text: string, area: AreaValue | null, isDivisor: boolean = false) => {
-    const colCards = cards.filter(c => c.tab === tab && c.coluna === coluna);
-    const maxOrder = colCards.length > 0 ? Math.max(...colCards.map(c => c.ordem)) : 0;
+    const colCards = (cards || []).filter((c: any) => c.tab === tab && c.coluna === coluna);
+    const maxOrder = colCards.length > 0 ? Math.max(...colCards.map((c: any) => c.ordem)) : 0;
     
     saveMutation.mutate({
       tab,
@@ -154,12 +128,10 @@ function RotinaPage() {
     
     let defaultCards: any[] = [];
     if (viewByDay) {
-      // Restore specific day across all 4 weeks
       const dayWeeks: RotinaTab[] = ['semana_1', 'semana_2', 'semana_3', 'semana_4'];
       defaultCards = ROTINA_DEFAULTS.filter(c => dayWeeks.includes(c.tab) && c.coluna === viewByDay);
       restoreMutation.mutate({ dia: viewByDay, cards: defaultCards });
     } else {
-      // Restore current tab
       defaultCards = ROTINA_DEFAULTS.filter(c => c.tab === activeTab);
       restoreMutation.mutate({ tab: activeTab, cards: defaultCards });
     }
@@ -169,7 +141,7 @@ function RotinaPage() {
     let text = "ROTINA - EXPORTAÇÃO\n\n";
     TABS.forEach(t => {
       text += `--- ${t.label.toUpperCase()} ---\n`;
-      const tabCards = cards.filter(c => c.tab === t.id);
+      const tabCards = (cards || []).filter((c: any) => c.tab === t.id);
       
       let cols: string[] = [];
       if (t.id === 'distribuir') cols = ['distribuir', 'ideias', 'desejos'];
@@ -186,8 +158,8 @@ function RotinaPage() {
             text += `\n--- ${c.texto} ---\n`;
           } else {
             const status = c.concluido ? "[X]" : "[ ]";
-            const area = c.area ? `(${areaLabel(c.area as any)})` : "";
-            text += `${status} ${c.texto} ${area}\n`;
+            const areaName = c.area ? `(${areaLabel(c.area as any)})` : "";
+            text += `${status} ${c.texto} ${areaName}\n`;
           }
         });
       });
@@ -198,72 +170,25 @@ function RotinaPage() {
     setIsExportModalOpen(true);
   };
 
-  // Drag and Drop
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const onDragEnd = (event: any) => {
-    const { active, over } = event;
-    if (!over) return;
-
-    if (active.id !== over.id) {
-      const activeCard = cards.find(c => c.id === active.id);
-      const overCard = cards.find(c => c.id === over.id);
-
-      if (activeCard && overCard) {
-        const sameCol = activeCard.tab === overCard.tab && activeCard.coluna === overCard.coluna;
-        
-        if (sameCol) {
-          const colCards = cards.filter(c => c.tab === activeCard.tab && c.coluna === activeCard.coluna).sort((a, b) => a.ordem - b.ordem);
-          const oldIndex = colCards.findIndex(c => c.id === active.id);
-          const newIndex = colCards.findIndex(c => c.id === over.id);
-          
-          const newArray = arrayMove(colCards, oldIndex, newIndex);
-          const updates = newArray.map((c, i) => ({
-            id: c.id,
-            tab: c.tab,
-            coluna: c.coluna,
-            ordem: i
-          }));
-          batchMutation.mutate(updates);
-        } else {
-          // Move between columns
-          const updates = [{
-            id: activeCard.id,
-            tab: overCard.tab,
-            coluna: overCard.coluna,
-            ordem: overCard.ordem + 0.5 // Temporary order, will be fixed by batch logic if needed
-          }];
-          batchMutation.mutate(updates);
-        }
-      }
-    }
-  };
-
-  // Rendering Columns
   const renderColumn = (tab: RotinaTab, coluna: string, label: string) => {
-    const colCards = cards
-      .filter(c => c.tab === tab && c.coluna === coluna)
+    const colCards = (cards || [])
+      .filter((c: any) => c.tab === tab && c.coluna === coluna)
       .sort((a, b) => a.ordem - b.ordem);
 
     return (
       <div key={`${tab}-${coluna}`} className="flex flex-col gap-4 min-w-[250px] flex-1">
         <div className="flex items-center justify-between border-b border-border pb-2 mb-2">
           <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">{label}</h3>
-          <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{colCards.filter(c => c.tipo_linha === 'card').length}</span>
+          <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{colCards.filter((c: any) => c.tipo_linha === 'card').length}</span>
         </div>
 
         <div className="flex flex-col gap-2 min-h-[100px]">
-          {colCards.map(card => (
+          {colCards.map((card: any) => (
             <RotinaCard 
               key={card.id} 
               card={card} 
               onToggle={() => handleToggleConcluido(card)}
-              onDelete={() => deleteMutation.mutate({ id: card.id })}
+              onDelete={() => deleteMutation.mutate(card.id)}
             />
           ))}
           <AddCardForm onAdd={(text, area) => handleAddCard(tab, coluna, text, area)} />
@@ -299,7 +224,6 @@ function RotinaPage() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Sidebar Day Filters */}
         <div className="w-full lg:w-48 flex-shrink-0 flex flex-col gap-2">
           <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Ver por dia</h4>
           <div className="flex flex-wrap lg:flex-col gap-1">
@@ -320,7 +244,6 @@ function RotinaPage() {
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="flex-1 space-y-6 min-w-0">
           {!viewByDay && (
             <div className="flex items-center gap-1 overflow-x-auto pb-2 scrollbar-none">
@@ -410,7 +333,7 @@ function RotinaCard({ card, onToggle, onDelete }: { card: any, onToggle: () => v
     );
   }
 
-  const areaColor = (area: string | null) => {
+  const getAreaColor = (area: string | null) => {
     if (!area) return "bg-gray-100 text-gray-600";
     const colors: Record<string, string> = {
       'diretoria': 'bg-indigo-100 text-indigo-700',
@@ -451,7 +374,7 @@ function RotinaCard({ card, onToggle, onDelete }: { card: any, onToggle: () => v
           {card.area && (
             <span className={cn(
               "inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider",
-              areaColor(card.area)
+              getAreaColor(card.area)
             )}>
               {areaLabel(card.area as any)}
             </span>
