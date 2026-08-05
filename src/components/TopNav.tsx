@@ -192,35 +192,8 @@ export function TopNav() {
     }
   }
 
-  // Map of areas and their items (mocked/extracted from route structure logic)
-  const AREA_MENU_ITEMS: Record<string, { label: string, key: string }[]> = {
-    diretoria: [{ label: "Visão Geral", key: "index" }],
-    financeiro: [
-      { label: "Visão Geral", key: "index" },
-      { label: "Pagamentos Recorrentes", key: "pagamentos-recorrentes" },
-      { label: "Links", key: "links" }
-    ],
-    consultorio: [
-      { label: "Visão Geral", key: "index" },
-      { label: "Ficha de Planejamento", key: "ficha-planejamento" },
-      { label: "Modelos de Documentos", key: "modelos-documentos" },
-      { label: "Protocolos", key: "protocolos" },
-      { label: "Links", key: "links" }
-    ],
-    gestao: [
-      { label: "Prompts", key: "prompts" },
-      { label: "Tarefas Recorrentes", key: "tarefas-recorrentes" },
-      { label: "Recorrentes Mensal", key: "tarefas-recorrentes-mensal" },
-      { label: "Rotina", key: "rotina" },
-      { label: "Links", key: "links" }
-    ],
-    versa3d: [{ label: "Visão Geral", key: "index" }, { label: "Links", key: "links" }],
-    especializacao: [{ label: "Visão Geral", key: "index" }, { label: "Links", key: "links" }],
-    graduacao: [{ label: "Visão Geral", key: "index" }, { label: "Links", key: "links" }],
-    doutorado: [{ label: "Visão Geral", key: "index" }, { label: "Links", key: "links" }],
-    "dentistas-petropolis": [{ label: "Visão Geral", key: "index" }, { label: "Links", key: "links" }],
-    "connect-lab": [{ label: "Visão Geral", key: "index" }, { label: "Links", key: "links" }],
-  };
+
+
 
   return (
     <header
