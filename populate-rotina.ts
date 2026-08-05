@@ -249,7 +249,7 @@ semana_4 | sabado | divisor | | Almoço | false
 semana_4 | sabado | divisor | | Turno Noite | false
 `;
 
-const areaMap: Record<string, string | null> = {
+const areaMap = {
   'Gestão': 'gestao',
   'Especialização': 'especializacao',
   'Financeiro': 'financeiro',
@@ -262,8 +262,8 @@ const areaMap: Record<string, string | null> = {
   'Dentistas Petrópolis': 'dentistas-petropolis'
 };
 
-const cards: any[] = [];
-const orders: Record<string, number> = {};
+const cards = [];
+const orders = {};
 
 rawData.trim().split('\n').forEach(line => {
   const trimmed = line.trim();
@@ -276,7 +276,7 @@ rawData.trim().split('\n').forEach(line => {
   const area = areaMap[areaName] || null;
   const concluido = concluidoStr === 'true';
   
-  const key = \`\${tab}|\${coluna}\`;
+  const key = tab + '|' + coluna;
   orders[key] = (orders[key] || 0) + 1;
   
   cards.push({
@@ -291,7 +291,7 @@ rawData.trim().split('\n').forEach(line => {
 });
 
 async function run() {
-  console.log(\`Populating \${cards.length} cards...\`);
+  console.log("Populating " + cards.length + " cards...");
   try {
     const { error: delError } = await supabase
       .from("rotina_cards")
@@ -307,7 +307,7 @@ async function run() {
         .from("rotina_cards")
         .insert(batch);
       if (insError) throw insError;
-      console.log(\`Inserted batch \${i / batchSize + 1}\`);
+      console.log("Inserted batch " + (i / batchSize + 1));
     }
     
     console.log("Success!");
