@@ -46,7 +46,7 @@ function ProtocolosPage() {
         .select("*")
         .order("criado_em", { ascending: false });
       if (error) throw error;
-      return data as Protocolo[];
+      return (data as any) as Protocolo[];
     },
   });
 
