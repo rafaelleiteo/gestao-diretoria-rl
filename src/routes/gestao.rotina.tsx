@@ -137,6 +137,11 @@ function RotinaPage() {
     }
   };
 
+  const handlePopulateAll = () => {
+    if (!confirm("Isso apagará todos os cards atuais e carregará os 211 registros padrão. Deseja continuar?")) return;
+    restoreMutation.mutate({ all: true, cards: ROTINA_DEFAULTS });
+  };
+
   const handleExport = () => {
     let text = "ROTINA - EXPORTAÇÃO\n\n";
     TABS.forEach(t => {
