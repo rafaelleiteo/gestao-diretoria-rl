@@ -6,12 +6,12 @@ export const getPermissions = createServerFn({ method: "GET" })
   .inputValidator((userId: string) => userId)
   .handler(async ({ data: userId }) => {
     const { data, error } = await supabase
-      .from("permissoes_usuario")
+      .from("permissoes_usuario" as any)
       .select("*")
       .eq("usuario_id", userId);
     
     if (error) throw error;
-    return data;
+    return data as any[];
   });
 
 export const savePermissions = createServerFn({ method: "POST" })
@@ -29,7 +29,7 @@ export const savePermissions = createServerFn({ method: "POST" })
 
     // 1. Delete existing permissions for this user
     const { error: deleteError } = await supabaseAdmin
-      .from("permissoes_usuario")
+      .from("permissoes_usuario" as any)
       .delete()
       .eq("usuario_id", data.userId);
     
@@ -38,7 +38,7 @@ export const savePermissions = createServerFn({ method: "POST" })
     // 2. Insert new permissions if any
     if (data.permissions.length > 0) {
       const { error: insertError } = await supabaseAdmin
-        .from("permissoes_usuario")
+        .from("permissoes_usuario" as any)
         .insert(data.permissions.map(p => ({
           usuario_id: data.userId,
           area: p.area,
@@ -74,14 +74,14 @@ export const checkPermission = createServerFn({ method: "GET" })
 
     // Check specific permission or wildcards
     const { data: perm } = await supabase
-      .from("permissoes_usuario")
+      .from("permissoes_usuario" as any)
       .select("id")
       .eq("usuario_id", user.id)
       .eq("area", data.area)
       .or(`item_menu.eq.${data.item_menu},item_menu.eq.*`)
       .limit(1);
 
-    return !!perm?.length;
+    return !!(perm as any)?.length;
   });
 
 export const getMyPermissions = createServerFn({ method: "GET" })
@@ -90,10 +90,10 @@ export const getMyPermissions = createServerFn({ method: "GET" })
     if (!user) return [];
 
     const { data, error } = await supabase
-      .from("permissoes_usuario")
+      .from("permissoes_usuario" as any)
       .select("area, item_menu")
       .eq("usuario_id", user.id);
     
     if (error) throw error;
-    return data;
+    return data as any[];
   });
