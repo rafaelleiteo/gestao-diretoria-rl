@@ -746,6 +746,7 @@ function ItemCard({
   onToggle: (item: InboxItem) => void;
   pending: boolean;
 }) {
+  const qc = useQueryClient();
   const editCtx = useInboxEdit();
   const canEdit = editCtx !== null;
   const isEditingThis = editCtx?.editing?.id === item.id;
