@@ -24,10 +24,10 @@ export const getRotinaCards = createServerFn({ method: "GET" })
   });
 
 export const saveRotinaCard = createServerFn({ method: "POST" })
-  .input(z.object({
+  .validator((data: any) => z.object({
     id: z.string().optional(),
     ...cardSchema.shape
-  }))
+  }).parse(data))
   .handler(async ({ data }) => {
     const { id, ...payload } = data;
     if (id) {
@@ -51,7 +51,7 @@ export const saveRotinaCard = createServerFn({ method: "POST" })
   });
 
 export const deleteRotinaCard = createServerFn({ method: "POST" })
-  .input(z.object({ id: z.string() }))
+  .validator((data: any) => z.object({ id: z.string() }).parse(data))
   .handler(async ({ data }) => {
     const { error } = await supabaseAdmin
       .from("rotina_cards")
@@ -62,16 +62,14 @@ export const deleteRotinaCard = createServerFn({ method: "POST" })
   });
 
 export const batchUpdateRotinaCards = createServerFn({ method: "POST" })
-  .input(z.array(z.object({
+  .validator((data: any) => z.array(z.object({
     id: z.string(),
     tab: z.string(),
     coluna: z.string(),
     ordem: z.number(),
     concluido: z.boolean().optional(),
-  })))
+  })).parse(data))
   .handler(async ({ data }) => {
-    // We use a transaction-like approach by updating each card
-    // In a real high-scale app, we'd use a RPC function for bulk upsert
     for (const card of data) {
       await supabaseAdmin
         .from("rotina_cards")
@@ -87,18 +85,25 @@ export const batchUpdateRotinaCards = createServerFn({ method: "POST" })
   });
 
 export const restoreDefaultRotina = createServerFn({ method: "POST" })
-  .input(z.object({ 
+  .validator((data: any) => z.object({ 
     tab: z.string().optional(),
-    dia: z.string().optional() 
-  }))
+    dia: z.string().optional(),
+    cards: z.array(z.any())
+  }).parse(data))
   .handler(async ({ data }) => {
-    // This will be implemented to seed default data for a specific tab or day
-    // For now, let's just clear and we'll handle the logic in the component/helper
     let query = supabaseAdmin.from("rotina_cards").delete();
     if (data.tab) query = query.eq("tab", data.tab);
     if (data.dia) query = query.eq("coluna", data.dia);
     
-    const { error } = await query;
-    if (error) throw error;
+    const { error: delError } = await query;
+    if (delError) throw delError;
+
+    if (data.cards && data.cards.length > 0) {
+      const { error: insError } = await supabaseAdmin
+        .from("rotina_cards")
+        .insert(data.cards);
+      if (insError) throw insError;
+    }
+    
     return { success: true };
   });
