@@ -17,7 +17,8 @@ import {
   X, 
   Download, 
   RotateCcw,
-  CalendarDays
+  CalendarDays,
+  Database
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
