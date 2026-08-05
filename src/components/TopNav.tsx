@@ -7,6 +7,7 @@ import { getCurrentUser, listUsers, inviteUser, deleteUser } from "@/lib/auth.fu
 import { getPermissions, savePermissions, getMyPermissions } from "@/lib/permissions.functions";
 import { Users, X, Copy, Trash2, Plus, ShieldCheck, CheckSquare, Square } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 
 
@@ -89,7 +90,7 @@ export function TopNav() {
 
 
   async function onLogout() {
-
+    await supabase.auth.signOut();
     await lock();
     await router.invalidate();
     await router.navigate({ to: "/unlock" });
