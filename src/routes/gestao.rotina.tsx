@@ -17,7 +17,8 @@ import {
   X, 
   Download, 
   RotateCcw,
-  CalendarDays
+  CalendarDays,
+  Database
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -137,6 +138,11 @@ function RotinaPage() {
     }
   };
 
+  const handlePopulateAll = () => {
+    if (!confirm("Isso apagará todos os cards atuais e carregará os 211 registros padrão. Deseja continuar?")) return;
+    restoreMutation.mutate({ all: true, cards: ROTINA_DEFAULTS });
+  };
+
   const handleExport = () => {
     let text = "ROTINA - EXPORTAÇÃO\n\n";
     TABS.forEach(t => {
@@ -212,6 +218,18 @@ function RotinaPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {(!cards || cards.length === 0) && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100"
+              onClick={handlePopulateAll}
+              disabled={restoreMutation.isPending}
+            >
+              <Database className="h-4 w-4 mr-2" />
+              {restoreMutation.isPending ? "Populando..." : "Popular Dados Padrão"}
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />
             Exportar
@@ -324,7 +342,11 @@ function RotinaCard({ card, onToggle, onDelete }: { card: any, onToggle: () => v
         </span>
         <div className="h-px bg-border flex-1"></div>
         <button 
-          onClick={onDelete}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDelete();
+          }}
           className="absolute right-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-destructive"
         >
           <X className="h-3 w-3" />
@@ -381,7 +403,11 @@ function RotinaCard({ card, onToggle, onDelete }: { card: any, onToggle: () => v
           )}
         </div>
         <button 
-          onClick={onDelete}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDelete();
+          }}
           className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-destructive self-start"
         >
           <X className="h-3 w-3" />

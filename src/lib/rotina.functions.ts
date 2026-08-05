@@ -88,21 +88,33 @@ export const restoreDefaultRotina = createServerFn({ method: "POST" })
   .validator((data: any) => z.object({ 
     tab: z.string().optional(),
     dia: z.string().optional(),
+    all: z.boolean().optional(),
     cards: z.array(z.any())
   }).parse(data))
   .handler(async ({ data }) => {
     let query = supabaseAdmin.from("rotina_cards").delete();
-    if (data.tab) query = query.eq("tab", data.tab);
-    if (data.dia) query = query.eq("coluna", data.dia);
+    
+    if (data.all) {
+      // Delete everything
+      query = query.not("id", "is", null);
+    } else {
+      if (data.tab) query = query.eq("tab", data.tab);
+      if (data.dia) query = query.eq("coluna", data.dia);
+    }
     
     const { error: delError } = await query;
     if (delError) throw delError;
 
     if (data.cards && data.cards.length > 0) {
-      const { error: insError } = await supabaseAdmin
-        .from("rotina_cards")
-        .insert(data.cards as any);
-      if (insError) throw insError;
+      // Batch insert in chunks of 50 to avoid payload limits
+      const batchSize = 50;
+      for (let i = 0; i < data.cards.length; i += batchSize) {
+        const batch = data.cards.slice(i, i + batchSize);
+        const { error: insError } = await supabaseAdmin
+          .from("rotina_cards")
+          .insert(batch);
+        if (insError) throw insError;
+      }
     }
     
     return { success: true };

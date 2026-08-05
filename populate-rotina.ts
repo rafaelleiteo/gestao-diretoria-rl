@@ -1,17 +1,8 @@
-import { AreaValue } from "./areas";
+const { createClient } = require("@supabase/supabase-js");
 
-export type RotinaCardType = 'card' | 'divisor';
-export type RotinaTab = 'distribuir' | 'descarga' | 'rotina_padrao' | 'semana_1' | 'semana_2' | 'semana_3' | 'semana_4';
-
-export interface DefaultCard {
-  tab: RotinaTab;
-  coluna: string;
-  area: AreaValue | null;
-  tipo_linha: RotinaCardType;
-  texto: string;
-  concluido: boolean;
-  ordem: number;
-}
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const rawData = `
 distribuir | ideias | card | Gestão | Estudar uma palavra em inglês | false
@@ -258,7 +249,7 @@ semana_4 | sabado | divisor | | Almoço | false
 semana_4 | sabado | divisor | | Turno Noite | false
 `;
 
-const areaMap: Record<string, string | null> = {
+const areaMap = {
   'Gestão': 'gestao',
   'Especialização': 'especializacao',
   'Financeiro': 'financeiro',
@@ -271,8 +262,8 @@ const areaMap: Record<string, string | null> = {
   'Dentistas Petrópolis': 'dentistas-petropolis'
 };
 
-export const ROTINA_DEFAULTS: DefaultCard[] = [];
-const orders: Record<string, number> = {};
+const cards = [];
+const orders = {};
 
 rawData.trim().split('\n').forEach(line => {
   const trimmed = line.trim();
@@ -288,13 +279,42 @@ rawData.trim().split('\n').forEach(line => {
   const key = tab + '|' + coluna;
   orders[key] = (orders[key] || 0) + 1;
   
-  ROTINA_DEFAULTS.push({
-    tab: tab as RotinaTab,
+  cards.push({
+    tab,
     coluna,
-    tipo_linha: tipo_linha as RotinaCardType,
-    area: area as AreaValue | null,
+    tipo_linha,
+    area,
     texto,
     concluido,
     ordem: orders[key]
   });
 });
+
+async function run() {
+  console.log("Populating " + cards.length + " cards...");
+  try {
+    const { error: delError } = await supabase
+      .from("rotina_cards")
+      .delete()
+      .not("id", "is", null);
+
+    if (delError) throw delError;
+
+    const batchSize = 50;
+    for (let i = 0; i < cards.length; i += batchSize) {
+      const batch = cards.slice(i, i + batchSize);
+      const { error: insError } = await supabase
+        .from("rotina_cards")
+        .insert(batch);
+      if (insError) throw insError;
+      console.log("Inserted batch " + (i / batchSize + 1));
+    }
+    
+    console.log("Success!");
+  } catch (err) {
+    console.error("Error:", err);
+    process.exit(1);
+  }
+}
+
+run();
