@@ -370,10 +370,18 @@ export function TopNav() {
                         >
                           {u.role}
                         </span>
-                        <span className={`h-1.5 w-1.5 rounded-full ${u.status === "ativo" ? "bg-green-500" : "bg-amber-500"}`} />
+                        <span
+                          className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                          style={u.status === "ativo"
+                            ? { backgroundColor: "#ECFDF5", color: "#047857" }
+                            : { backgroundColor: "#FFFBEB", color: "#B45309" }}
+                        >
+                          {u.status === "ativo" ? "Ativo" : "Convite pendente"}
+                        </span>
                       </div>
                       <span className="text-[12px] text-[#6B7280]">{u.email}</span>
                     </div>
+
 
                     <div className="flex items-center gap-2">
                       {u.status === "convidado" && u.convite_token && (
