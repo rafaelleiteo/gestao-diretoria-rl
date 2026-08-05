@@ -26,18 +26,22 @@ export function AreaSidebarLayout({ title, menu, children }: Props) {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [myPermissions, setMyPermissions] = useState<any[]>([]);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
 
   const fetchCurrentUser = useServerFn(getCurrentUser);
   const fetchMyPermissions = useServerFn(getMyPermissions);
 
   useEffect(() => {
-    fetchCurrentUser().then(setUser);
-    fetchMyPermissions().then(setMyPermissions);
+    Promise.all([
+      fetchCurrentUser().then(setUser),
+      fetchMyPermissions().then(setMyPermissions)
+    ]).finally(() => setIsLoadingUser(false));
   }, [fetchCurrentUser, fetchMyPermissions]);
 
   const slugFromTitle = title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-");
   
   const filteredMenu = useMemo(() => {
+    if (isLoadingUser) return [];
     if (!user) return [];
     if (user.role === "admin") return menu;
 
@@ -54,7 +58,7 @@ export function AreaSidebarLayout({ title, menu, children }: Props) {
 
   // Authorization check
   useEffect(() => {
-    if (user && user.role !== "admin") {
+    if (!isLoadingUser && user && user.role !== "admin") {
       const areaPerms = myPermissions.filter(p => p.area === slugFromTitle);
       const hasAccess = areaPerms.length > 0;
       
