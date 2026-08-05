@@ -5,9 +5,11 @@ import { TAB_AREAS } from "@/lib/areas";
 import { lockSite } from "@/lib/gate.functions";
 import { getCurrentUser, listUsers, inviteUser, deleteUser, deleteInvite } from "@/lib/auth.functions";
 import { getPermissions, savePermissions, getMyPermissions } from "@/lib/permissions.functions";
-import { Users, X, Copy, Trash2, Plus, ShieldCheck, CheckSquare, Square } from "lucide-react";
+import { Users, X, Copy, Trash2, Plus, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { PermissionsPanel, togglePermission, type Permission } from "@/components/PermissionsPanel";
+
 
 
 
@@ -27,7 +29,10 @@ export function TopNav() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
+  const [inviteStep, setInviteStep] = useState<"dados" | "permissoes">("dados");
+  const [invitePermissions, setInvitePermissions] = useState<Permission[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
 
 
   const fetchCurrentUser = useServerFn(getCurrentUser);
@@ -97,25 +102,37 @@ export function TopNav() {
     await router.navigate({ to: "/unlock" });
   }
 
+  function closeAddForm() {
+    setShowAddForm(false);
+    setInviteStep("dados");
+    setInvitePermissions([]);
+    setNewUserName("");
+    setNewUserEmail("");
+  }
+
   async function onInvite(e: React.FormEvent) {
     e.preventDefault();
+    if (inviteStep === "dados") {
+      setInviteStep("permissoes");
+      return;
+    }
     setSubmitting(true);
     try {
-      const { token } = await invite({ data: { nome: newUserName, email: newUserEmail } });
+      const { token } = await invite({
+        data: { nome: newUserName, email: newUserEmail, permissions: invitePermissions },
+      });
       const inviteLink = `${window.location.origin}/convite/${token}`;
-      
-      // We'll show the link in a toast or just update the list
-      toast.success("Usuário convidado!");
-      setNewUserName("");
-      setNewUserEmail("");
-      setShowAddForm(false);
+
+      toast.success("Convite criado com as permissões definidas!");
+      closeAddForm();
       fetchUsers().then(setUsers);
-      
+
       // Copy to clipboard immediately
       await navigator.clipboard.writeText(inviteLink);
       toast.info("Link de convite copiado!");
     } catch (err: any) {
       toast.error(err.message || "Erro ao convidar");
+
     } finally {
       setSubmitting(false);
     }
@@ -151,27 +168,10 @@ export function TopNav() {
     }
   }
 
-  async function onTogglePermission(area: string, item: string) {
-    const exists = userPermissions.some(p => p.area === area && p.item_menu === item);
-    let next: any[];
-    
-    if (exists) {
-      next = userPermissions.filter(p => !(p.area === area && p.item_menu === item));
-    } else {
-      next = [...userPermissions, { area, item_menu: item }];
-    }
-    
-    // If setting specific item, ensure "*" is removed
-    if (item !== "*" && !exists) {
-      next = next.filter(p => !(p.area === area && p.item_menu === "*"));
-    }
-    // If setting "*", remove all other items for that area
-    if (item === "*" && !exists) {
-      next = next.filter(p => p.area !== area || p.item_menu === "*");
-    }
-    
-    setUserPermissions(next);
+  function onTogglePermission(area: string, item: string) {
+    setUserPermissions((prev) => togglePermission(prev as Permission[], area, item));
   }
+
 
   async function onSavePermissions() {
     if (!selectedUser) return;
@@ -192,35 +192,8 @@ export function TopNav() {
     }
   }
 
-  // Map of areas and their items (mocked/extracted from route structure logic)
-  const AREA_MENU_ITEMS: Record<string, { label: string, key: string }[]> = {
-    diretoria: [{ label: "Visão Geral", key: "index" }],
-    financeiro: [
-      { label: "Visão Geral", key: "index" },
-      { label: "Pagamentos Recorrentes", key: "pagamentos-recorrentes" },
-      { label: "Links", key: "links" }
-    ],
-    consultorio: [
-      { label: "Visão Geral", key: "index" },
-      { label: "Ficha de Planejamento", key: "ficha-planejamento" },
-      { label: "Modelos de Documentos", key: "modelos-documentos" },
-      { label: "Protocolos", key: "protocolos" },
-      { label: "Links", key: "links" }
-    ],
-    gestao: [
-      { label: "Prompts", key: "prompts" },
-      { label: "Tarefas Recorrentes", key: "tarefas-recorrentes" },
-      { label: "Recorrentes Mensal", key: "tarefas-recorrentes-mensal" },
-      { label: "Rotina", key: "rotina" },
-      { label: "Links", key: "links" }
-    ],
-    versa3d: [{ label: "Visão Geral", key: "index" }, { label: "Links", key: "links" }],
-    especializacao: [{ label: "Visão Geral", key: "index" }, { label: "Links", key: "links" }],
-    graduacao: [{ label: "Visão Geral", key: "index" }, { label: "Links", key: "links" }],
-    doutorado: [{ label: "Visão Geral", key: "index" }, { label: "Links", key: "links" }],
-    "dentistas-petropolis": [{ label: "Visão Geral", key: "index" }, { label: "Links", key: "links" }],
-    "connect-lab": [{ label: "Visão Geral", key: "index" }, { label: "Links", key: "links" }],
-  };
+
+
 
   return (
     <header
@@ -319,37 +292,59 @@ export function TopNav() {
 
               {showAddForm && (
                 <form onSubmit={onInvite} className="mb-8 rounded-xl border bg-[#FAFAFA] p-4" style={{ borderColor: "#EDEDED" }}>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-medium uppercase text-[#6B7280]">Nome</label>
-                      <input
-                        type="text"
-                        value={newUserName}
-                        onChange={(e) => setNewUserName(e.target.value)}
-                        required
-                        className="h-9 rounded-lg border bg-white px-3 text-[13px] outline-none focus:border-[#4F46E5]"
-                        style={{ borderColor: "#EDEDED" }}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-medium uppercase text-[#6B7280]">E-mail</label>
-                      <input
-                        type="email"
-                        value={newUserEmail}
-                        onChange={(e) => setNewUserEmail(e.target.value)}
-                        required
-                        className="h-9 rounded-lg border bg-white px-3 text-[13px] outline-none focus:border-[#4F46E5]"
-                        style={{ borderColor: "#EDEDED" }}
-                      />
-                    </div>
+                  <div className="mb-4 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider">
+                    <span style={{ color: inviteStep === "dados" ? "#4F46E5" : "#6B7280" }}>1. Dados</span>
+                    <span style={{ color: "#EDEDED" }}>—</span>
+                    <span style={{ color: inviteStep === "permissoes" ? "#4F46E5" : "#6B7280" }}>2. Permissões</span>
                   </div>
+
+                  {inviteStep === "dados" ? (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-medium uppercase text-[#6B7280]">Nome</label>
+                        <input
+                          type="text"
+                          value={newUserName}
+                          onChange={(e) => setNewUserName(e.target.value)}
+                          required
+                          className="h-9 rounded-lg border bg-white px-3 text-[13px] outline-none focus:border-[#4F46E5]"
+                          style={{ borderColor: "#EDEDED" }}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-medium uppercase text-[#6B7280]">E-mail</label>
+                        <input
+                          type="email"
+                          value={newUserEmail}
+                          onChange={(e) => setNewUserEmail(e.target.value)}
+                          required
+                          className="h-9 rounded-lg border bg-white px-3 text-[13px] outline-none focus:border-[#4F46E5]"
+                          style={{ borderColor: "#EDEDED" }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="max-h-[45vh] overflow-y-auto pr-1">
+                      <p className="mb-3 text-[12px] text-[#6B7280]">
+                        Defina o que <strong className="text-[#111111]">{newUserName}</strong> poderá acessar. As permissões
+                        serão aplicadas automaticamente quando a conta for ativada.
+                      </p>
+                      <PermissionsPanel
+                        permissions={invitePermissions}
+                        onToggle={(area, item) =>
+                          setInvitePermissions((prev) => togglePermission(prev, area, item))
+                        }
+                      />
+                    </div>
+                  )}
+
                   <div className="mt-4 flex justify-end gap-2">
                     <button
                       type="button"
-                      onClick={() => setShowAddForm(false)}
+                      onClick={() => (inviteStep === "permissoes" ? setInviteStep("dados") : closeAddForm())}
                       className="rounded-full px-4 py-1.5 text-[12px] font-medium text-[#6B7280]"
                     >
-                      Cancelar
+                      {inviteStep === "permissoes" ? "Voltar" : "Cancelar"}
                     </button>
                     <button
                       type="submit"
@@ -357,11 +352,16 @@ export function TopNav() {
                       className="rounded-full px-4 py-1.5 text-[12px] font-semibold text-white disabled:opacity-50"
                       style={{ backgroundColor: "#4F46E5" }}
                     >
-                      {submitting ? "Salvando..." : "Salvar e Gerar Link"}
+                      {inviteStep === "dados"
+                        ? "Continuar"
+                        : submitting
+                          ? "Salvando..."
+                          : "Salvar e Gerar Link"}
                     </button>
                   </div>
                 </form>
               )}
+
 
               <div className="space-y-2">
                 {users.map((u) => (
@@ -437,6 +437,48 @@ export function TopNav() {
           </div>
         </div>
       )}
+
+      {showPermissionsModal && selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm px-4">
+          <div className="w-full max-w-2xl overflow-hidden rounded-2xl border bg-white shadow-xl" style={{ borderColor: "#EDEDED" }}>
+            <div className="flex items-center justify-between border-b px-6 py-4" style={{ borderColor: "#EDEDED" }}>
+              <h2 className="text-lg font-bold tracking-tight" style={{ color: "#111111" }}>
+                Permissões — {selectedUser.nome}
+              </h2>
+              <button onClick={() => setShowPermissionsModal(false)} className="text-[#6B7280] hover:text-[#111111]">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] overflow-y-auto p-6">
+              <PermissionsPanel
+                permissions={userPermissions as Permission[]}
+                onToggle={onTogglePermission}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 border-t px-6 py-4" style={{ borderColor: "#EDEDED" }}>
+              <button
+                type="button"
+                onClick={() => setShowPermissionsModal(false)}
+                className="rounded-full px-4 py-1.5 text-[12px] font-medium text-[#6B7280]"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={onSavePermissions}
+                disabled={submitting}
+                className="rounded-full px-4 py-1.5 text-[12px] font-semibold text-white disabled:opacity-50"
+                style={{ backgroundColor: "#4F46E5" }}
+              >
+                {submitting ? "Salvando..." : "Salvar permissões"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
 
     </header>
   );
