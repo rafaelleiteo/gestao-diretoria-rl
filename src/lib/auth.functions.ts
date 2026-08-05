@@ -52,10 +52,13 @@ export const listUsers = createServerFn({ method: "GET" })
   });
 
 export const inviteUser = createServerFn({ method: "POST" })
-  .inputValidator((data: { nome: string; email: string }) => 
-    z.object({ 
-      nome: z.string().min(1), 
-      email: z.string().email() 
+  .inputValidator((data: unknown) =>
+    z.object({
+      nome: z.string().min(1),
+      email: z.string().email(),
+      permissions: z
+        .array(z.object({ area: z.string(), item_menu: z.string() }))
+        .default([]),
     }).parse(data)
   )
   .handler(async ({ data }) => {
@@ -74,8 +77,23 @@ export const inviteUser = createServerFn({ method: "POST" })
       .single();
 
     if (error) throw error;
+
+    if (data.permissions.length > 0) {
+      const { error: permError } = await supabaseAdmin
+        .from("permissoes_convite" as any)
+        .insert(
+          data.permissions.map((p) => ({
+            convite_id: convite.id,
+            area: p.area,
+            item_menu: p.item_menu,
+          }))
+        );
+      if (permError) throw permError;
+    }
+
     return { convite, token };
   });
+
 
 export const deleteInvite = createServerFn({ method: "POST" })
   .inputValidator((id: string) => id)
