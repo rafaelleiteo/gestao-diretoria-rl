@@ -330,7 +330,7 @@ function RotinaCard({ card, onToggle, onDelete }: { card: any, onToggle: () => v
         </span>
         <div className="h-px bg-border flex-1"></div>
         <button 
-          onPointerDown={(e) => {
+          onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             onDelete();
@@ -391,7 +391,7 @@ function RotinaCard({ card, onToggle, onDelete }: { card: any, onToggle: () => v
           )}
         </div>
         <button 
-          onPointerDown={(e) => {
+          onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             onDelete();
