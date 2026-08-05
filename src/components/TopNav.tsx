@@ -47,21 +47,12 @@ export function TopNav() {
     }
   }, [showUsersModal, fetchUsers]);
 
-  const canAccessArea = useMemo(() => {
+  const canAccessArea = (areaSlug: string) => {
     if (!user) return false;
-    if (user.role === "admin") return () => true;
-    
-    return (areaSlug: string) => {
-      return myPermissions.some(p => p.area === areaSlug);
-    };
-  }, [user, myPermissions]);
+    if (user.role === "admin") return true;
+    return myPermissions.some(p => p.area === areaSlug);
+  };
 
-
-  useEffect(() => {
-    if (showUsersModal) {
-      fetchUsers().then(setUsers);
-    }
-  }, [showUsersModal, fetchUsers]);
 
   async function onLogout() {
 
