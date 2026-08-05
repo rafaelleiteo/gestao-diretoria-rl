@@ -102,25 +102,37 @@ export function TopNav() {
     await router.navigate({ to: "/unlock" });
   }
 
+  function closeAddForm() {
+    setShowAddForm(false);
+    setInviteStep("dados");
+    setInvitePermissions([]);
+    setNewUserName("");
+    setNewUserEmail("");
+  }
+
   async function onInvite(e: React.FormEvent) {
     e.preventDefault();
+    if (inviteStep === "dados") {
+      setInviteStep("permissoes");
+      return;
+    }
     setSubmitting(true);
     try {
-      const { token } = await invite({ data: { nome: newUserName, email: newUserEmail } });
+      const { token } = await invite({
+        data: { nome: newUserName, email: newUserEmail, permissions: invitePermissions },
+      });
       const inviteLink = `${window.location.origin}/convite/${token}`;
-      
-      // We'll show the link in a toast or just update the list
-      toast.success("Usuário convidado!");
-      setNewUserName("");
-      setNewUserEmail("");
-      setShowAddForm(false);
+
+      toast.success("Convite criado com as permissões definidas!");
+      closeAddForm();
       fetchUsers().then(setUsers);
-      
+
       // Copy to clipboard immediately
       await navigator.clipboard.writeText(inviteLink);
       toast.info("Link de convite copiado!");
     } catch (err: any) {
       toast.error(err.message || "Erro ao convidar");
+
     } finally {
       setSubmitting(false);
     }
