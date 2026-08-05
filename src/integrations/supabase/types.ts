@@ -229,6 +229,38 @@ export type Database = {
           },
         ]
       }
+      permissoes_convite: {
+        Row: {
+          area: string
+          convite_id: string
+          criado_em: string
+          id: string
+          item_menu: string
+        }
+        Insert: {
+          area: string
+          convite_id: string
+          criado_em?: string
+          id?: string
+          item_menu: string
+        }
+        Update: {
+          area?: string
+          convite_id?: string
+          criado_em?: string
+          id?: string
+          item_menu?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permissoes_convite_convite_id_fkey"
+            columns: ["convite_id"]
+            isOneToOne: false
+            referencedRelation: "convites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       permissoes_usuario: {
         Row: {
           area: string
