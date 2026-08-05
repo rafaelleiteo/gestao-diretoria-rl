@@ -202,6 +202,42 @@ export type Database = {
         }
         Relationships: []
       }
+      rotina_cards: {
+        Row: {
+          area: Database["public"]["Enums"]["inbox_area"] | null
+          coluna: string
+          concluido: boolean | null
+          criado_em: string | null
+          id: string
+          ordem: number
+          tab: string
+          texto: string
+          tipo_linha: string
+        }
+        Insert: {
+          area?: Database["public"]["Enums"]["inbox_area"] | null
+          coluna: string
+          concluido?: boolean | null
+          criado_em?: string | null
+          id?: string
+          ordem: number
+          tab: string
+          texto: string
+          tipo_linha: string
+        }
+        Update: {
+          area?: Database["public"]["Enums"]["inbox_area"] | null
+          coluna?: string
+          concluido?: boolean | null
+          criado_em?: string | null
+          id?: string
+          ordem?: number
+          tab?: string
+          texto?: string
+          tipo_linha?: string
+        }
+        Relationships: []
+      }
       tarefas_recorrentes: {
         Row: {
           area: Database["public"]["Enums"]["inbox_area"]
