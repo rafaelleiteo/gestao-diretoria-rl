@@ -15,6 +15,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { TopNav } from "@/components/TopNav";
 import { getUnlockStatus } from "@/lib/gate.functions";
+import { Toaster } from "@/components/ui/sonner";
+
 
 function NotFoundComponent() {
   return (
@@ -70,8 +72,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   beforeLoad: async ({ location }) => {
-    if (location.pathname === "/unlock") return;
+    if (location.pathname === "/unlock" || location.pathname.startsWith("/convite/")) return;
     const { unlocked } = await getUnlockStatus();
+
     if (!unlocked) throw redirect({ to: "/unlock" });
   },
   head: () => ({
@@ -114,7 +117,9 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", backgroundColor: "#FFFFFF", color: "#111111" }}>
         {children}
+        <Toaster />
         <Scripts />
+
       </body>
     </html>
   );
