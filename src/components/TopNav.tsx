@@ -7,6 +7,7 @@ import { getCurrentUser, listUsers, inviteUser, deleteUser } from "@/lib/auth.fu
 import { getPermissions, savePermissions, getMyPermissions } from "@/lib/permissions.functions";
 import { Users, X, Copy, Trash2, Plus, ShieldCheck, CheckSquare, Square } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 
 
@@ -38,10 +39,40 @@ export function TopNav() {
   const remove = useServerFn(deleteUser);
 
   useEffect(() => {
-    Promise.all([
-      fetchCurrentUser().then(setUser),
-      fetchMyPermissions().then(setMyPermissions)
-    ]).finally(() => setIsLoadingUser(false));
+    let active = true;
+
+    async function loadAccess() {
+      const [profileResult, permissionsResult] = await Promise.allSettled([
+        fetchCurrentUser(),
+        fetchMyPermissions(),
+      ]);
+
+      if (!active) return;
+
+      if (profileResult.status === "fulfilled") {
+        const profile = profileResult.value;
+        console.info("[auth-debug] perfil atual", profile
+          ? { id: profile.id, role: profile.role, status: profile.status }
+          : null);
+        setUser(profile);
+      } else {
+        console.error("Falha ao carregar o perfil atual", profileResult.reason);
+        toast.error("Não foi possível carregar seu perfil");
+      }
+
+      if (permissionsResult.status === "fulfilled") {
+        setMyPermissions(permissionsResult.value);
+      } else {
+        console.error("Falha ao carregar permissões", permissionsResult.reason);
+      }
+
+      setIsLoadingUser(false);
+    }
+
+    void loadAccess();
+    return () => {
+      active = false;
+    };
   }, [fetchCurrentUser, fetchMyPermissions]);
 
   useEffect(() => {
@@ -59,7 +90,7 @@ export function TopNav() {
 
 
   async function onLogout() {
-
+    await supabase.auth.signOut();
     await lock();
     await router.invalidate();
     await router.navigate({ to: "/unlock" });

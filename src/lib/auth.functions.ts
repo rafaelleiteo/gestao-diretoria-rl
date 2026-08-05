@@ -1,17 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 export const getCurrentUser = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
-
-    const { data: profile } = await supabase
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: profile, error } = await context.supabase
       .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
+      .select("id, nome, email, role, status, convite_token, criado_em")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    if (error) throw error;
 
     return profile;
   });

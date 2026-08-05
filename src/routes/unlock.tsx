@@ -2,6 +2,7 @@ import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { getUnlockStatus, unlockSite } from "@/lib/gate.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/unlock")({
   head: () => ({
@@ -33,6 +34,15 @@ function UnlockPage() {
     try {
       const { ok } = await unlock({ data: { username, password } });
       if (ok) {
+        const { error: authError } = await supabase.auth.signInWithPassword({
+          email: "rafael@example.com",
+          password,
+        });
+        if (authError) {
+          console.error("Falha ao autenticar o perfil do administrador", authError);
+          setError(true);
+          return;
+        }
         await router.invalidate();
         await router.navigate({ to: "/" });
       } else {
