@@ -324,7 +324,11 @@ function RotinaCard({ card, onToggle, onDelete }: { card: any, onToggle: () => v
         </span>
         <div className="h-px bg-border flex-1"></div>
         <button 
-          onClick={onDelete}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDelete();
+          }}
           className="absolute right-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-destructive"
         >
           <X className="h-3 w-3" />
@@ -381,7 +385,11 @@ function RotinaCard({ card, onToggle, onDelete }: { card: any, onToggle: () => v
           )}
         </div>
         <button 
-          onClick={onDelete}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDelete();
+          }}
           className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-destructive self-start"
         >
           <X className="h-3 w-3" />
