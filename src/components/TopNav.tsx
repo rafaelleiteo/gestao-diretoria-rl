@@ -168,27 +168,10 @@ export function TopNav() {
     }
   }
 
-  async function onTogglePermission(area: string, item: string) {
-    const exists = userPermissions.some(p => p.area === area && p.item_menu === item);
-    let next: any[];
-    
-    if (exists) {
-      next = userPermissions.filter(p => !(p.area === area && p.item_menu === item));
-    } else {
-      next = [...userPermissions, { area, item_menu: item }];
-    }
-    
-    // If setting specific item, ensure "*" is removed
-    if (item !== "*" && !exists) {
-      next = next.filter(p => !(p.area === area && p.item_menu === "*"));
-    }
-    // If setting "*", remove all other items for that area
-    if (item === "*" && !exists) {
-      next = next.filter(p => p.area !== area || p.item_menu === "*");
-    }
-    
-    setUserPermissions(next);
+  function onTogglePermission(area: string, item: string) {
+    setUserPermissions((prev) => togglePermission(prev as Permission[], area, item));
   }
+
 
   async function onSavePermissions() {
     if (!selectedUser) return;
