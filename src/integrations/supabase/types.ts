@@ -44,6 +44,33 @@ export type Database = {
         }
         Relationships: []
       }
+      convites: {
+        Row: {
+          criado_em: string
+          email: string
+          id: string
+          nome: string
+          status: string
+          token: string
+        }
+        Insert: {
+          criado_em?: string
+          email: string
+          id?: string
+          nome: string
+          status?: string
+          token: string
+        }
+        Update: {
+          criado_em?: string
+          email?: string
+          id?: string
+          nome?: string
+          status?: string
+          token?: string
+        }
+        Relationships: []
+      }
       documento_modelos: {
         Row: {
           ativo: boolean
