@@ -1051,6 +1051,7 @@ export function InboxList({
   diaFilter,
   categorias = [],
   prioridades = [],
+  mostrarConcluidos = false,
 }: {
   areaFilter?: AreaValue;
   emptyLabel?: string;

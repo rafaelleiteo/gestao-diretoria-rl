@@ -39,7 +39,7 @@ export function TarefasRecorrentesMensal() {
         .order("dia_mes", { ascending: true })
         .order("descricao", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as TarefaItem[];
+      return (data || []) as unknown as TarefaItem[];
     },
   });
 
@@ -51,7 +51,7 @@ export function TarefasRecorrentesMensal() {
         .select("id, item_id, mes, ano, feito")
         .eq("ano", ano);
       if (error) throw error;
-      return (data ?? []) as TarefaRegistro[];
+      return (data || []) as unknown as TarefaRegistro[];
     },
   });
 
