@@ -202,6 +202,36 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          convite_token: string | null
+          criado_em: string | null
+          email: string
+          id: string
+          nome: string
+          role: string
+          status: string
+        }
+        Insert: {
+          convite_token?: string | null
+          criado_em?: string | null
+          email: string
+          id: string
+          nome: string
+          role: string
+          status: string
+        }
+        Update: {
+          convite_token?: string | null
+          criado_em?: string | null
+          email?: string
+          id?: string
+          nome?: string
+          role?: string
+          status?: string
+        }
+        Relationships: []
+      }
       prompts: {
         Row: {
           criado_em: string
