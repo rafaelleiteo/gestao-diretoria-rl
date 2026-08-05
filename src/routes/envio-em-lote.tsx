@@ -142,7 +142,7 @@ function EnvioEmLote() {
   });
 
   const handleProcess = () => {
-    if (!text.trim() || processMutation.isPending) return;
+    if (processMutation.isPending) return;
     const lines = text.split("\n");
     processMutation.mutate(lines);
   };
