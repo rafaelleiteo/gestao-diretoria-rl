@@ -33,7 +33,7 @@ export const saveRotinaCard = createServerFn({ method: "POST" })
     if (id) {
       const { data: updated, error } = await supabaseAdmin
         .from("rotina_cards")
-        .update(payload)
+        .update(payload as any)
         .eq("id", id)
         .select()
         .single();
@@ -42,7 +42,7 @@ export const saveRotinaCard = createServerFn({ method: "POST" })
     } else {
       const { data: inserted, error } = await supabaseAdmin
         .from("rotina_cards")
-        .insert(payload)
+        .insert(payload as any)
         .select()
         .single();
       if (error) throw error;
@@ -101,7 +101,7 @@ export const restoreDefaultRotina = createServerFn({ method: "POST" })
     if (data.cards && data.cards.length > 0) {
       const { error: insError } = await supabaseAdmin
         .from("rotina_cards")
-        .insert(data.cards);
+        .insert(data.cards as any);
       if (insError) throw insError;
     }
     
