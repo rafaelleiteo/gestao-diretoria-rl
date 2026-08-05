@@ -4,13 +4,13 @@ import { getLinksByArea, createLink, deleteLink } from "./links.server";
 import { type AreaValue } from "./areas";
 
 export const getLinks = createServerFn({ method: "GET" })
-  .validator((data: { area: string }) => data)
+  .inputValidator((data: { area: string }) => data)
   .handler(async ({ data }) => {
     return getLinksByArea(data.area as AreaValue);
   });
 
 export const addLink = createServerFn({ method: "POST" })
-  .validator(
+  .inputValidator(
     z.object({
       area: z.string(),
       titulo: z.string().min(1, "Título é obrigatório"),
@@ -22,7 +22,7 @@ export const addLink = createServerFn({ method: "POST" })
   });
 
 export const removeLink = createServerFn({ method: "POST" })
-  .validator((data: { id: string }) => data)
+  .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
     return deleteLink(data.id);
   });
