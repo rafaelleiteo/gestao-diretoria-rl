@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 export const getPermissions = createServerFn({ method: "GET" })
@@ -52,47 +53,47 @@ export const savePermissions = createServerFn({ method: "POST" })
   });
 
 export const checkPermission = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: { area: string, item_menu: string }) => 
     z.object({
       area: z.string(),
       item_menu: z.string()
     }).parse(data)
   )
-  .handler(async ({ data }) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return false;
-
+  .handler(async ({ data, context }) => {
     // Get user profile role
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await context.supabase
       .from("profiles")
       .select("role")
-      .eq("id", user.id)
-      .single();
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    if (profileError) throw profileError;
     
     if (!profile) return false;
     if (profile.role === "admin") return true;
 
     // Check specific permission or wildcards
-    const { data: perm } = await supabase
+    const { data: perm, error: permissionError } = await context.supabase
       .from("permissoes_usuario" as any)
       .select("id")
-      .eq("usuario_id", user.id)
+      .eq("usuario_id", context.userId)
       .eq("area", data.area)
       .or(`item_menu.eq.${data.item_menu},item_menu.eq.*`)
       .limit(1);
+
+    if (permissionError) throw permissionError;
 
     return !!(perm as any)?.length;
   });
 
 export const getMyPermissions = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return [];
-
-    const { data, error } = await supabase
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
       .from("permissoes_usuario" as any)
       .select("area, item_menu")
-      .eq("usuario_id", user.id);
+      .eq("usuario_id", context.userId);
     
     if (error) throw error;
     return data as any[];
