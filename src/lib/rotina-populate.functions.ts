@@ -4,22 +4,14 @@ import { z } from "zod";
 
 export const populateRotinaDefaults = createServerFn({ method: "POST" })
   .validator((data: any) => z.object({
-    cards: z.array(z.object({
-      tab: z.string(),
-      coluna: z.string(),
-      area: z.string().nullable(),
-      tipo_linha: z.string(),
-      texto: z.string(),
-      concluido: z.boolean(),
-      ordem: z.number()
-    }))
+    cards: z.array(z.any())
   }).parse(data))
   .handler(async ({ data }) => {
     // 1. Delete all existing records
     const { error: delError } = await supabaseAdmin
       .from("rotina_cards")
       .delete()
-      .not("id", "is", null); // Correct way to match all rows
+      .not("id", "is", null);
 
     if (delError) throw delError;
 
@@ -27,7 +19,7 @@ export const populateRotinaDefaults = createServerFn({ method: "POST" })
     if (data.cards && data.cards.length > 0) {
       const { error: insError } = await supabaseAdmin
         .from("rotina_cards")
-        .insert(data.cards);
+        .insert(data.cards as any);
       if (insError) throw insError;
     }
     
