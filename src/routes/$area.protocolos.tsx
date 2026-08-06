@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/$area/protocolos")({
   head: ({ loaderData }) => {
-    const areaLabel = loaderData?.areaLabel ?? "Protocolos";
+    const areaLabel = (loaderData as any)?.areaLabel ?? "Protocolos";
     return {
       meta: [
         { title: `Protocolos — ${areaLabel} — Rafael Leite` },

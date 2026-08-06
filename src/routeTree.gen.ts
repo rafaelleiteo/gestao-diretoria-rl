@@ -33,6 +33,7 @@ import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
 import { Route as ConsultorioModelosDocumentosRouteImport } from './routes/consultorio.modelos-documentos'
 import { Route as ConsultorioLinksRouteImport } from './routes/consultorio.links'
 import { Route as ConsultorioFichaPlanejamentoRouteImport } from './routes/consultorio.ficha-planejamento'
+import { Route as AreaProtocolosRouteImport } from './routes/$area.protocolos'
 import { Route as AreaLinksRouteImport } from './routes/$area.links'
 import { Route as ApiPublicHooksSendRemindersRouteImport } from './routes/api/public/hooks/send-reminders'
 import { Route as ApiPublicHooksResumoDiarioTarefasRouteImport } from './routes/api/public/hooks/resumo-diario-tarefas'
@@ -162,6 +163,11 @@ const ConsultorioFichaPlanejamentoRoute =
     path: '/ficha-planejamento',
     getParentRoute: () => ConsultorioRoute,
   } as any)
+const AreaProtocolosRoute = AreaProtocolosRouteImport.update({
+  id: '/protocolos',
+  path: '/protocolos',
+  getParentRoute: () => AreaRoute,
+} as any)
 const AreaLinksRoute = AreaLinksRouteImport.update({
   id: '/links',
   path: '/links',
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/protocolos': typeof ProtocolosRoute
   '/unlock': typeof UnlockRoute
   '/$area/links': typeof AreaLinksRoute
+  '/$area/protocolos': typeof AreaProtocolosRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/consultorio/links': typeof ConsultorioLinksRoute
   '/consultorio/modelos-documentos': typeof ConsultorioModelosDocumentosRoute
@@ -216,6 +223,7 @@ export interface FileRoutesByTo {
   '/protocolos': typeof ProtocolosRoute
   '/unlock': typeof UnlockRoute
   '/$area/links': typeof AreaLinksRoute
+  '/$area/protocolos': typeof AreaProtocolosRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/consultorio/links': typeof ConsultorioLinksRoute
   '/consultorio/modelos-documentos': typeof ConsultorioModelosDocumentosRoute
@@ -246,6 +254,7 @@ export interface FileRoutesById {
   '/protocolos': typeof ProtocolosRoute
   '/unlock': typeof UnlockRoute
   '/$area/links': typeof AreaLinksRoute
+  '/$area/protocolos': typeof AreaProtocolosRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/consultorio/links': typeof ConsultorioLinksRoute
   '/consultorio/modelos-documentos': typeof ConsultorioModelosDocumentosRoute
@@ -277,6 +286,7 @@ export interface FileRouteTypes {
     | '/protocolos'
     | '/unlock'
     | '/$area/links'
+    | '/$area/protocolos'
     | '/consultorio/ficha-planejamento'
     | '/consultorio/links'
     | '/consultorio/modelos-documentos'
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/protocolos'
     | '/unlock'
     | '/$area/links'
+    | '/$area/protocolos'
     | '/consultorio/ficha-planejamento'
     | '/consultorio/links'
     | '/consultorio/modelos-documentos'
@@ -331,6 +342,7 @@ export interface FileRouteTypes {
     | '/protocolos'
     | '/unlock'
     | '/$area/links'
+    | '/$area/protocolos'
     | '/consultorio/ficha-planejamento'
     | '/consultorio/links'
     | '/consultorio/modelos-documentos'
@@ -535,6 +547,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConsultorioFichaPlanejamentoRouteImport
       parentRoute: typeof ConsultorioRoute
     }
+    '/$area/protocolos': {
+      id: '/$area/protocolos'
+      path: '/protocolos'
+      fullPath: '/$area/protocolos'
+      preLoaderRoute: typeof AreaProtocolosRouteImport
+      parentRoute: typeof AreaRoute
+    }
     '/$area/links': {
       id: '/$area/links'
       path: '/links'
@@ -561,11 +580,13 @@ declare module '@tanstack/react-router' {
 
 interface AreaRouteChildren {
   AreaLinksRoute: typeof AreaLinksRoute
+  AreaProtocolosRoute: typeof AreaProtocolosRoute
   AreaIndexRoute: typeof AreaIndexRoute
 }
 
 const AreaRouteChildren: AreaRouteChildren = {
   AreaLinksRoute: AreaLinksRoute,
+  AreaProtocolosRoute: AreaProtocolosRoute,
   AreaIndexRoute: AreaIndexRoute,
 }
 
@@ -644,13 +665,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
