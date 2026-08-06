@@ -455,32 +455,3 @@ function MarkerButton({
   );
 }
 
-function MarkerButton({
-  label,
-  active,
-  disabled,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  disabled: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="inline-flex items-center justify-center rounded-full border px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wider transition-colors disabled:opacity-60"
-      style={
-        active
-          ? { backgroundColor: "#4F46E5", borderColor: "#4F46E5", color: "#FFFFFF" }
-          : { backgroundColor: "#FFFFFF", borderColor: "#EDEDED", color: "#6B7280" }
-      }
-      aria-pressed={active}
-      aria-label={`${label} ${active ? "marcado" : "não marcado"}`}
-    >
-      {label}
-    </button>
-  );
-}
