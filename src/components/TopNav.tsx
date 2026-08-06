@@ -213,6 +213,13 @@ export function TopNav() {
           {TAB_AREAS.filter(area => canAccessArea(area.slug)).map((area) => {
             const to = `/${area.slug}`;
             const active = pathname === to || pathname.startsWith(to + "/");
+            
+            // Apply abbreviations for specific areas
+            let displayLabel = area.label;
+            if (area.slug === "doutorado") displayLabel = "DR";
+            else if (area.slug === "dentistas-petropolis") displayLabel = "D.Petrópolis";
+            else if (area.slug === "connect-lab") displayLabel = "C.Lab";
+
             return (
               <Link
                 key={area.slug}
@@ -231,7 +238,7 @@ export function TopNav() {
                     e.currentTarget.style.backgroundColor = "transparent";
                 }}
               >
-                <span className="whitespace-nowrap">{area.label}</span>
+                <span className="whitespace-nowrap">{displayLabel}</span>
               </Link>
             );
           })}
