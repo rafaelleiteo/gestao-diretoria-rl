@@ -4,7 +4,7 @@ import { InboxList } from "@/components/Inbox";
 import { AreaSummary } from "@/components/InboxSummary";
 import { TarefasRecorrentesModule } from "@/components/TarefasRecorrentes";
 import { AreaSidebarLayout, type SidebarMenuItem } from "@/components/AreaSidebar";
-import { Inbox as InboxIcon, Link as LinkIcon } from "lucide-react";
+import { Inbox as InboxIcon, Link as LinkIcon, FileText } from "lucide-react";
 
 export const Route = createFileRoute("/$area")({
   loader: ({ params }) => {
@@ -39,6 +39,7 @@ function AreaLayout() {
 
   const menu: SidebarMenuItem[] = [
     { to: `/${slug}`, label: "Visão Geral", icon: InboxIcon, exact: true },
+    { to: `/${slug}/protocolos`, label: "Protocolos", icon: FileText },
     { to: `/${slug}/links`, label: "Links", icon: LinkIcon },
   ];
 

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnlockRouteImport } from './routes/unlock'
+import { Route as ProtocolosRouteImport } from './routes/protocolos'
 import { Route as GestaoRouteImport } from './routes/gestao'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
 import { Route as EnvioEmLoteRouteImport } from './routes/envio-em-lote'
@@ -29,7 +30,6 @@ import { Route as GestaoLinksRouteImport } from './routes/gestao.links'
 import { Route as FinanceiroPagamentosRecorrentesRouteImport } from './routes/financeiro.pagamentos-recorrentes'
 import { Route as FinanceiroLinksRouteImport } from './routes/financeiro.links'
 import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
-import { Route as ConsultorioProtocolosRouteImport } from './routes/consultorio.protocolos'
 import { Route as ConsultorioModelosDocumentosRouteImport } from './routes/consultorio.modelos-documentos'
 import { Route as ConsultorioLinksRouteImport } from './routes/consultorio.links'
 import { Route as ConsultorioFichaPlanejamentoRouteImport } from './routes/consultorio.ficha-planejamento'
@@ -40,6 +40,11 @@ import { Route as ApiPublicHooksResumoDiarioTarefasRouteImport } from './routes/
 const UnlockRoute = UnlockRouteImport.update({
   id: '/unlock',
   path: '/unlock',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProtocolosRoute = ProtocolosRouteImport.update({
+  id: '/protocolos',
+  path: '/protocolos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GestaoRoute = GestaoRouteImport.update({
@@ -140,11 +145,6 @@ const ConviteTokenRoute = ConviteTokenRouteImport.update({
   path: '/convite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ConsultorioProtocolosRoute = ConsultorioProtocolosRouteImport.update({
-  id: '/protocolos',
-  path: '/protocolos',
-  getParentRoute: () => ConsultorioRoute,
-} as any)
 const ConsultorioModelosDocumentosRoute =
   ConsultorioModelosDocumentosRouteImport.update({
     id: '/modelos-documentos',
@@ -188,12 +188,12 @@ export interface FileRoutesByFullPath {
   '/envio-em-lote': typeof EnvioEmLoteRoute
   '/financeiro': typeof FinanceiroRouteWithChildren
   '/gestao': typeof GestaoRouteWithChildren
+  '/protocolos': typeof ProtocolosRoute
   '/unlock': typeof UnlockRoute
   '/$area/links': typeof AreaLinksRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/consultorio/links': typeof ConsultorioLinksRoute
   '/consultorio/modelos-documentos': typeof ConsultorioModelosDocumentosRoute
-  '/consultorio/protocolos': typeof ConsultorioProtocolosRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/financeiro/links': typeof FinanceiroLinksRoute
   '/financeiro/pagamentos-recorrentes': typeof FinanceiroPagamentosRecorrentesRoute
@@ -213,12 +213,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/envio-em-lote': typeof EnvioEmLoteRoute
+  '/protocolos': typeof ProtocolosRoute
   '/unlock': typeof UnlockRoute
   '/$area/links': typeof AreaLinksRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/consultorio/links': typeof ConsultorioLinksRoute
   '/consultorio/modelos-documentos': typeof ConsultorioModelosDocumentosRoute
-  '/consultorio/protocolos': typeof ConsultorioProtocolosRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/financeiro/links': typeof FinanceiroLinksRoute
   '/financeiro/pagamentos-recorrentes': typeof FinanceiroPagamentosRecorrentesRoute
@@ -243,12 +243,12 @@ export interface FileRoutesById {
   '/envio-em-lote': typeof EnvioEmLoteRoute
   '/financeiro': typeof FinanceiroRouteWithChildren
   '/gestao': typeof GestaoRouteWithChildren
+  '/protocolos': typeof ProtocolosRoute
   '/unlock': typeof UnlockRoute
   '/$area/links': typeof AreaLinksRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
   '/consultorio/links': typeof ConsultorioLinksRoute
   '/consultorio/modelos-documentos': typeof ConsultorioModelosDocumentosRoute
-  '/consultorio/protocolos': typeof ConsultorioProtocolosRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/financeiro/links': typeof FinanceiroLinksRoute
   '/financeiro/pagamentos-recorrentes': typeof FinanceiroPagamentosRecorrentesRoute
@@ -274,12 +274,12 @@ export interface FileRouteTypes {
     | '/envio-em-lote'
     | '/financeiro'
     | '/gestao'
+    | '/protocolos'
     | '/unlock'
     | '/$area/links'
     | '/consultorio/ficha-planejamento'
     | '/consultorio/links'
     | '/consultorio/modelos-documentos'
-    | '/consultorio/protocolos'
     | '/convite/$token'
     | '/financeiro/links'
     | '/financeiro/pagamentos-recorrentes'
@@ -299,12 +299,12 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/envio-em-lote'
+    | '/protocolos'
     | '/unlock'
     | '/$area/links'
     | '/consultorio/ficha-planejamento'
     | '/consultorio/links'
     | '/consultorio/modelos-documentos'
-    | '/consultorio/protocolos'
     | '/convite/$token'
     | '/financeiro/links'
     | '/financeiro/pagamentos-recorrentes'
@@ -328,12 +328,12 @@ export interface FileRouteTypes {
     | '/envio-em-lote'
     | '/financeiro'
     | '/gestao'
+    | '/protocolos'
     | '/unlock'
     | '/$area/links'
     | '/consultorio/ficha-planejamento'
     | '/consultorio/links'
     | '/consultorio/modelos-documentos'
-    | '/consultorio/protocolos'
     | '/convite/$token'
     | '/financeiro/links'
     | '/financeiro/pagamentos-recorrentes'
@@ -358,6 +358,7 @@ export interface RootRouteChildren {
   EnvioEmLoteRoute: typeof EnvioEmLoteRoute
   FinanceiroRoute: typeof FinanceiroRouteWithChildren
   GestaoRoute: typeof GestaoRouteWithChildren
+  ProtocolosRoute: typeof ProtocolosRoute
   UnlockRoute: typeof UnlockRoute
   ConviteTokenRoute: typeof ConviteTokenRoute
   ApiPublicHooksResumoDiarioTarefasRoute: typeof ApiPublicHooksResumoDiarioTarefasRoute
@@ -371,6 +372,13 @@ declare module '@tanstack/react-router' {
       path: '/unlock'
       fullPath: '/unlock'
       preLoaderRoute: typeof UnlockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/protocolos': {
+      id: '/protocolos'
+      path: '/protocolos'
+      fullPath: '/protocolos'
+      preLoaderRoute: typeof ProtocolosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gestao': {
@@ -506,13 +514,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/consultorio/protocolos': {
-      id: '/consultorio/protocolos'
-      path: '/protocolos'
-      fullPath: '/consultorio/protocolos'
-      preLoaderRoute: typeof ConsultorioProtocolosRouteImport
-      parentRoute: typeof ConsultorioRoute
-    }
     '/consultorio/modelos-documentos': {
       id: '/consultorio/modelos-documentos'
       path: '/modelos-documentos'
@@ -574,7 +575,6 @@ interface ConsultorioRouteChildren {
   ConsultorioFichaPlanejamentoRoute: typeof ConsultorioFichaPlanejamentoRoute
   ConsultorioLinksRoute: typeof ConsultorioLinksRoute
   ConsultorioModelosDocumentosRoute: typeof ConsultorioModelosDocumentosRoute
-  ConsultorioProtocolosRoute: typeof ConsultorioProtocolosRoute
   ConsultorioIndexRoute: typeof ConsultorioIndexRoute
 }
 
@@ -582,7 +582,6 @@ const ConsultorioRouteChildren: ConsultorioRouteChildren = {
   ConsultorioFichaPlanejamentoRoute: ConsultorioFichaPlanejamentoRoute,
   ConsultorioLinksRoute: ConsultorioLinksRoute,
   ConsultorioModelosDocumentosRoute: ConsultorioModelosDocumentosRoute,
-  ConsultorioProtocolosRoute: ConsultorioProtocolosRoute,
   ConsultorioIndexRoute: ConsultorioIndexRoute,
 }
 
@@ -635,6 +634,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnvioEmLoteRoute: EnvioEmLoteRoute,
   FinanceiroRoute: FinanceiroRouteWithChildren,
   GestaoRoute: GestaoRouteWithChildren,
+  ProtocolosRoute: ProtocolosRoute,
   UnlockRoute: UnlockRoute,
   ConviteTokenRoute: ConviteTokenRoute,
   ApiPublicHooksResumoDiarioTarefasRoute:

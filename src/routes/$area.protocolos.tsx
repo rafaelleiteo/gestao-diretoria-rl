@@ -1,18 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { Copy, Check, Plus, X, Pencil, Trash2, Search } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { Copy, Check, Plus, X, Pencil, Trash2, Search, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { TAB_AREAS, type TabArea } from "@/lib/areas";
+import { toast } from "sonner";
 
-export const Route = createFileRoute("/protocolos")({
-  head: () => ({
-    meta: [
-      { title: "Protocolos — Consultório — Rafael Leite" },
-      { name: "description", content: "Protocolos clínicos e de gestão para o consultório." },
-      { property: "og:title", content: "Protocolos — Consultório" },
-      { property: "og:description", content: "Protocolos clínicos e de gestão para o consultório." },
-    ],
-  }),
+export const Route = createFileRoute("/$area/protocolos")({
+  head: ({ loaderData }) => {
+    const areaLabel = loaderData?.areaLabel ?? "Protocolos";
+    return {
+      meta: [
+        { title: `Protocolos — ${areaLabel} — Rafael Leite` },
+        { name: "description", content: `Protocolos clínicos e de gestão para ${areaLabel}.` },
+        { property: "og:title", content: `Protocolos — ${areaLabel}` },
+        { property: "og:description", content: `Protocolos clínicos e de gestão para ${areaLabel}.` },
+      ],
+    };
+  },
+  loader: ({ params }) => {
+    const area = TAB_AREAS.find((a) => a.slug === params.area);
+    return { 
+      areaSlug: params.area as TabArea, 
+      areaLabel: area?.label ?? params.area 
+    };
+  },
   component: ProtocolosPage,
 });
 
@@ -22,28 +34,41 @@ type Protocolo = {
   titulo: string;
   descricao: string | null;
   conteudo: string;
+  area: string;
   criado_em: string;
 };
 
-const TRUNCATE_LINES = 5;
-
 function ProtocolosPage() {
+  const { areaSlug, areaLabel } = Route.useLoaderData();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [filterTipo, setFilterTipo] = useState<"todos" | "clinico" | "gestao">("todos");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [tipo, setTipo] = useState<"clinico" | "gestao">("clinico");
+  
+  // Rules for types based on area
+  const isMedicalArea = areaSlug === "consultorio" || areaSlug === "especializacao";
+  
+  const [tipo, setTipo] = useState<"clinico" | "gestao">("gestao");
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
   const [conteudo, setConteudo] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isMedicalArea) {
+      setTipo("gestao");
+      setFilterTipo("todos");
+    }
+  }, [isMedicalArea]);
 
   const { data: protocolos = [], isLoading } = useQuery({
-    queryKey: ["protocolos"],
+    queryKey: ["protocolos", areaSlug],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("protocolos" as any)
         .select("*")
+        .eq("area", areaLabel)
         .order("criado_em", { ascending: false });
       if (error) throw error;
       return (data as any) as Protocolo[];
@@ -52,11 +77,13 @@ function ProtocolosPage() {
 
   const saveMut = useMutation({
     mutationFn: async () => {
+      setFormError(null);
       const payload = {
-        tipo,
+        tipo: isMedicalArea ? tipo : "gestao",
         titulo: titulo.trim(),
         descricao: descricao.trim() || null,
         conteudo: conteudo.trim(),
+        area: areaLabel,
       };
 
       if (editingId) {
@@ -71,9 +98,14 @@ function ProtocolosPage() {
       }
     },
     onSuccess: () => {
+      toast.success(editingId ? "Protocolo atualizado!" : "Protocolo criado!");
       cancelForm();
-      qc.invalidateQueries({ queryKey: ["protocolos"] });
+      qc.invalidateQueries({ queryKey: ["protocolos", areaSlug] });
     },
+    onError: (error: any) => {
+      console.error("Erro ao salvar protocolo:", error);
+      setFormError(error.message || "Erro desconhecido ao salvar. Verifique se todos os campos estão preenchidos.");
+    }
   });
 
   const deleteMut = useMutation({
@@ -82,8 +114,12 @@ function ProtocolosPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["protocolos"] });
+      toast.success("Protocolo excluído!");
+      qc.invalidateQueries({ queryKey: ["protocolos", areaSlug] });
     },
+    onError: (error: any) => {
+      toast.error("Erro ao excluir: " + error.message);
+    }
   });
 
   const startEdit = (p: Protocolo) => {
@@ -93,6 +129,7 @@ function ProtocolosPage() {
     setDescricao(p.descricao ?? "");
     setConteudo(p.conteudo);
     setShowForm(true);
+    setFormError(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -102,13 +139,14 @@ function ProtocolosPage() {
     setTitulo("");
     setDescricao("");
     setConteudo("");
-    setTipo("clinico");
+    setTipo(isMedicalArea ? "clinico" : "gestao");
+    setFormError(null);
   };
 
   const filtered = useMemo(() => {
     let result = protocolos;
     
-    if (filterTipo !== "todos") {
+    if (isMedicalArea && filterTipo !== "todos") {
       result = result.filter(p => p.tipo === filterTipo);
     }
 
@@ -122,7 +160,7 @@ function ProtocolosPage() {
     }
     
     return result;
-  }, [protocolos, search, filterTipo]);
+  }, [protocolos, search, filterTipo, isMedicalArea]);
 
   const canSave = titulo.trim().length > 0 && conteudo.trim().length > 0;
 
@@ -134,7 +172,7 @@ function ProtocolosPage() {
             Protocolos
           </h1>
           <p className="mt-1 text-[13px]" style={{ color: "#6B7280" }}>
-            Passo a passo clínicos e fluxos de gestão do consultório.
+            Passo a passo e fluxos de gestão para {areaLabel}.
           </p>
         </div>
         <button
@@ -150,26 +188,28 @@ function ProtocolosPage() {
       {showForm && (
         <div className="mt-4 rounded-2xl border bg-white p-5 shadow-sm" style={{ borderColor: "#EDEDED" }}>
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[12px] font-semibold uppercase tracking-wider text-gray-400">Tipo de Protocolo</label>
-              <div className="flex gap-2">
-                {(["clinico", "gestao"] as const).map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setTipo(t)}
-                    className="flex-1 rounded-lg border py-2 text-[13px] font-medium transition-colors"
-                    style={{
-                      borderColor: tipo === t ? "#4F46E5" : "#EDEDED",
-                      backgroundColor: tipo === t ? "#4F46E5" : "transparent",
-                      color: tipo === t ? "white" : "#6B7280",
-                    }}
-                  >
-                    {t === "clinico" ? "Clínico" : "Gestão"}
-                  </button>
-                ))}
+            {isMedicalArea && (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[12px] font-semibold uppercase tracking-wider text-gray-400">Tipo de Protocolo</label>
+                <div className="flex gap-2">
+                  {(["clinico", "gestao"] as const).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setTipo(t)}
+                      className="flex-1 rounded-lg border py-2 text-[13px] font-medium transition-colors"
+                      style={{
+                        borderColor: tipo === t ? "#4F46E5" : "#EDEDED",
+                        backgroundColor: tipo === t ? "#4F46E5" : "transparent",
+                        color: tipo === t ? "white" : "#6B7280",
+                      }}
+                    >
+                      {t === "clinico" ? "Clínico" : "Gestão"}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="flex flex-col gap-1.5">
               <input
@@ -202,6 +242,13 @@ function ProtocolosPage() {
               />
             </div>
 
+            {formError && (
+              <div className="flex items-center gap-2 p-3 text-[13px] text-red-600 bg-red-50 rounded-lg border border-red-100">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{formError}</span>
+              </div>
+            )}
+
             <div className="flex justify-end pt-2">
               <button
                 disabled={!canSave || saveMut.isPending}
@@ -227,21 +274,23 @@ function ProtocolosPage() {
             style={{ borderColor: "#EDEDED", color: "#111111" }}
           />
         </div>
-        <div className="flex gap-1 p-1 bg-white border rounded-full" style={{ borderColor: "#EDEDED" }}>
-          {(["todos", "clinico", "gestao"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setFilterTipo(t)}
-              className="px-4 py-1.5 rounded-full text-[12px] font-medium transition-all"
-              style={{
-                backgroundColor: filterTipo === t ? "#4F46E5" : "transparent",
-                color: filterTipo === t ? "white" : "#6B7280",
-              }}
-            >
-              {t === "todos" ? "Todos" : t === "clinico" ? "Clínico" : "Gestão"}
-            </button>
-          ))}
-        </div>
+        {isMedicalArea && (
+          <div className="flex gap-1 p-1 bg-white border rounded-full" style={{ borderColor: "#EDEDED" }}>
+            {(["todos", "clinico", "gestao"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setFilterTipo(t)}
+                className="px-4 py-1.5 rounded-full text-[12px] font-medium transition-all"
+                style={{
+                  backgroundColor: filterTipo === t ? "#4F46E5" : "transparent",
+                  color: filterTipo === t ? "white" : "#6B7280",
+                }}
+              >
+                {t === "todos" ? "Todos" : t === "clinico" ? "Clínico" : "Gestão"}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4">
@@ -249,7 +298,7 @@ function ProtocolosPage() {
           <div className="py-12 text-center text-[13px] text-gray-500">Carregando protocolos...</div>
         ) : filtered.length === 0 ? (
           <div className="py-12 text-center text-[13px] text-gray-500 rounded-2xl border border-dashed" style={{ borderColor: "#EDEDED" }}>
-            {protocolos.length === 0 ? "Nenhum protocolo cadastrado." : "Nenhum protocolo encontrado para essa busca."}
+            {protocolos.length === 0 ? `Nenhum protocolo cadastrado em ${areaLabel}.` : "Nenhum protocolo encontrado para essa busca."}
           </div>
         ) : (
           filtered.map((p) => (
