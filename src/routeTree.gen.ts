@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnlockRouteImport } from './routes/unlock'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProtocolosRouteImport } from './routes/protocolos'
 import { Route as GestaoRouteImport } from './routes/gestao'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
@@ -41,6 +42,11 @@ import { Route as ApiPublicHooksResumoDiarioTarefasRouteImport } from './routes/
 const UnlockRoute = UnlockRouteImport.update({
   id: '/unlock',
   path: '/unlock',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProtocolosRoute = ProtocolosRouteImport.update({
@@ -195,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/financeiro': typeof FinanceiroRouteWithChildren
   '/gestao': typeof GestaoRouteWithChildren
   '/protocolos': typeof ProtocolosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/unlock': typeof UnlockRoute
   '/$area/links': typeof AreaLinksRoute
   '/$area/protocolos': typeof AreaProtocolosRoute
@@ -221,6 +228,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/envio-em-lote': typeof EnvioEmLoteRoute
   '/protocolos': typeof ProtocolosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/unlock': typeof UnlockRoute
   '/$area/links': typeof AreaLinksRoute
   '/$area/protocolos': typeof AreaProtocolosRoute
@@ -252,6 +260,7 @@ export interface FileRoutesById {
   '/financeiro': typeof FinanceiroRouteWithChildren
   '/gestao': typeof GestaoRouteWithChildren
   '/protocolos': typeof ProtocolosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/unlock': typeof UnlockRoute
   '/$area/links': typeof AreaLinksRoute
   '/$area/protocolos': typeof AreaProtocolosRoute
@@ -284,6 +293,7 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/gestao'
     | '/protocolos'
+    | '/reset-password'
     | '/unlock'
     | '/$area/links'
     | '/$area/protocolos'
@@ -310,6 +320,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/envio-em-lote'
     | '/protocolos'
+    | '/reset-password'
     | '/unlock'
     | '/$area/links'
     | '/$area/protocolos'
@@ -340,6 +351,7 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/gestao'
     | '/protocolos'
+    | '/reset-password'
     | '/unlock'
     | '/$area/links'
     | '/$area/protocolos'
@@ -371,6 +383,7 @@ export interface RootRouteChildren {
   FinanceiroRoute: typeof FinanceiroRouteWithChildren
   GestaoRoute: typeof GestaoRouteWithChildren
   ProtocolosRoute: typeof ProtocolosRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   UnlockRoute: typeof UnlockRoute
   ConviteTokenRoute: typeof ConviteTokenRoute
   ApiPublicHooksResumoDiarioTarefasRoute: typeof ApiPublicHooksResumoDiarioTarefasRoute
@@ -384,6 +397,13 @@ declare module '@tanstack/react-router' {
       path: '/unlock'
       fullPath: '/unlock'
       preLoaderRoute: typeof UnlockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/protocolos': {
@@ -656,6 +676,7 @@ const rootRouteChildren: RootRouteChildren = {
   FinanceiroRoute: FinanceiroRouteWithChildren,
   GestaoRoute: GestaoRouteWithChildren,
   ProtocolosRoute: ProtocolosRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   UnlockRoute: UnlockRoute,
   ConviteTokenRoute: ConviteTokenRoute,
   ApiPublicHooksResumoDiarioTarefasRoute:
@@ -665,13 +686,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
