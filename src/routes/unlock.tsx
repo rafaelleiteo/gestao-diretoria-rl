@@ -26,6 +26,33 @@ function UnlockPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showReset, setShowReset] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetMsg, setResetMsg] = useState<string | null>(null);
+  const [resetErr, setResetErr] = useState<string | null>(null);
+  const [resetLoading, setResetLoading] = useState(false);
+
+  async function onReset(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setResetMsg(null);
+    setResetErr(null);
+    setResetLoading(true);
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (resetError) {
+        setResetErr(resetError.message);
+        return;
+      }
+      setResetMsg("Enviamos um link de redefinição para o seu e-mail.");
+    } catch (err) {
+      setResetErr(err instanceof Error ? err.message : "Falha ao enviar o e-mail.");
+    } finally {
+      setResetLoading(false);
+    }
+  }
+
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
