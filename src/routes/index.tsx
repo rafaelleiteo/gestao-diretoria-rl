@@ -1,3 +1,26 @@
+/**
+ * Execute esta instrucao no projeto: Não tenho acesso direto ao painel do Supabase deste projeto (é gerenciado
+ * internamente pelo Lovable Cloud). Preciso publicar este projeto na Vercel,
+ * mas o deploy está falhando por falta da SUPABASE_SERVICE_ROLE_KEY.
+ *
+ * Antes de eu partir para criar um Supabase totalmente novo (o que exigiria
+ * migrar todos os dados manualmente), preciso saber:
+ *
+ * 1. O Lovable tem alguma integração nativa de deploy/publicação direto para
+ *    a Vercel, que configure as variáveis de ambiente automaticamente sem eu
+ *    precisar manipular a service_role key manualmente?
+ * 2. Se não houver essa integração, existe algum jeito de eu obter acesso
+ *    (mesmo que somente leitura) ao projeto Supabase por trás deste Lovable
+ *    Cloud — por exemplo, um convite de colaborador no painel do Supabase,
+ *    ou uma forma de vocês gerarem e me enviarem com segurança só a
+ *    SUPABASE_SERVICE_ROLE_KEY e a anon key deste projeto específico?
+ * 3. Se nenhuma das opções acima for possível, confirme: a única alternativa
+ *    seria eu criar um projeto Supabase novo, do zero, e migrar schema +
+ *    dados manualmente para lá?
+ *
+ * Preciso de uma resposta clara sobre qual desses 3 caminhos é o real,
+ * antes de continuar.
+ */
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
