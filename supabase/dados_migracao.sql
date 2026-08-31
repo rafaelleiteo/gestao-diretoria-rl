@@ -1,6 +1,6 @@
 -- ==========================================
 -- DADOS PARA MIGRAÇÃO - PROD DA GESTÃO DIRETORIA
--- Gerado em: 2026-08-31T22:50:47.154Z
+-- Gerado em: 2026-08-31T23:05:15.496Z
 -- ==========================================
 
 -- tabela: inbox_items
@@ -95,6 +95,16 @@ INSERT INTO public.inbox_items (id, texto, tipo, area, concluido, criado_em, lem
 
 -- tabela: tarefas_recorrentes
 -- (nenhum registro encontrado em tarefas_recorrentes)
+
+-- tabela: tarefas_recorrentes_mensal_item
+INSERT INTO public.tarefas_recorrentes_mensal_item (id, dia_mes, descricao) VALUES ('6d1a9b20-14e3-4d7a-8f52-4a0b6c81e9f1', 1, 'Mandar email Taina sobre atendimentos');
+INSERT INTO public.tarefas_recorrentes_mensal_item (id, dia_mes, descricao) VALUES ('8b2c0d31-25f4-4e8b-9a63-5b1c7d92f0a2', 1, 'Fechar contas aulas Professores');
+INSERT INTO public.tarefas_recorrentes_mensal_item (id, dia_mes, descricao) VALUES ('9c3d1e42-36a5-4f9c-ab74-6c2d8e03a1b3', 5, 'Cobrança clientes VERSA');
+INSERT INTO public.tarefas_recorrentes_mensal_item (id, dia_mes, descricao) VALUES ('0d4e2f53-47b6-40ad-bc85-7d3e9f14b2c4', 25, 'Fechar agenda mês seguinte');
+INSERT INTO public.tarefas_recorrentes_mensal_item (id, dia_mes, descricao) VALUES ('1e5f3a64-58c7-41be-cd96-8e4f0a25c3d5', 25, 'Fechar Pagamento Belle');
+
+-- tabela: tarefas_recorrentes_mensal_registro
+-- (nenhum registro encontrado em tarefas_recorrentes_mensal_registro)
 
 -- tabela: rotina_cards
 INSERT INTO public.rotina_cards (id, tab, coluna, area, tipo_linha, texto, concluido, ordem, criado_em) VALUES ('a2751254-525a-4ae0-8351-bd8c84126ace', 'distribuir', 'ideias', 'gestao', 'card', 'Estudar uma palavra em inglês', false, 1, '2026-08-05T01:36:14.184685+00:00');
@@ -359,6 +369,9 @@ INSERT INTO public.pagamentos_recorrentes_registro (id, pagamento_id, mes, ano, 
 INSERT INTO public.pagamentos_recorrentes_registro (id, pagamento_id, mes, ano, impresso, pago, atualizado_em) VALUES ('dd07a6b0-bb86-49ee-bec5-fdd19582af10', '859c117b-58e3-49ff-9793-93ae4c24c8aa', 8, 2026, false, true, '2026-08-05T19:57:35.430318+00:00');
 INSERT INTO public.pagamentos_recorrentes_registro (id, pagamento_id, mes, ano, impresso, pago, atualizado_em) VALUES ('8fb3772c-f3f9-4458-b926-289b98bc463c', 'd2015865-3921-40da-9d59-a2816d732cff', 8, 2026, true, false, '2026-08-05T19:57:42.241129+00:00');
 INSERT INTO public.pagamentos_recorrentes_registro (id, pagamento_id, mes, ano, impresso, pago, atualizado_em) VALUES ('20e32e05-704a-47c2-ad89-07ad70bdec72', 'c57e8871-7260-48c7-a170-1a742158ab02', 7, 2026, true, true, '2026-08-05T19:57:48.424+00:00');
+
+-- tabela: protocolos
+-- (nenhum registro encontrado em protocolos)
 
 -- tabela: prompts
 INSERT INTO public.prompts (id, titulo, descricao, texto, criado_em) VALUES ('ef0bd2dc-1f61-4cbe-88dc-5536109caa6d', 'Fichas do dia Clinicorp', 'Puxar ficha do dia', 'Abrir fichas

@@ -76,6 +76,21 @@ CREATE TABLE public.tarefas_recorrentes (
     criado_em timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE TABLE public.tarefas_recorrentes_mensal_item (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    dia_mes int NOT NULL CHECK (dia_mes BETWEEN 1 AND 31),
+    descricao text NOT NULL
+);
+
+CREATE TABLE public.tarefas_recorrentes_mensal_registro (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    item_id uuid NOT NULL REFERENCES public.tarefas_recorrentes_mensal_item(id) ON DELETE CASCADE,
+    mes int NOT NULL CHECK (mes BETWEEN 1 AND 12),
+    ano int NOT NULL,
+    feito boolean NOT NULL DEFAULT false,
+    UNIQUE (item_id, mes, ano)
+);
+
 CREATE TABLE public.pagamentos_recorrentes (
     id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     dia_mes int NOT NULL CHECK (dia_mes BETWEEN 1 AND 31),
@@ -268,6 +283,24 @@ CREATE POLICY "Public can read tarefas recorrentes" ON public.tarefas_recorrente
 CREATE POLICY "Public can insert tarefas recorrentes" ON public.tarefas_recorrentes FOR INSERT WITH CHECK (true);
 CREATE POLICY "Public can update tarefas recorrentes" ON public.tarefas_recorrentes FOR UPDATE USING (true) WITH CHECK (true);
 CREATE POLICY "Public can delete tarefas recorrentes" ON public.tarefas_recorrentes FOR DELETE USING (true);
+
+-- tarefas_recorrentes_mensal_item
+ALTER TABLE public.tarefas_recorrentes_mensal_item ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.tarefas_recorrentes_mensal_item TO anon, authenticated;
+GRANT ALL ON public.tarefas_recorrentes_mensal_item TO service_role;
+CREATE POLICY "Public can read tarefas_recorrentes_mensal_item" ON public.tarefas_recorrentes_mensal_item FOR SELECT USING (true);
+CREATE POLICY "Public can insert tarefas_recorrentes_mensal_item" ON public.tarefas_recorrentes_mensal_item FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public can update tarefas_recorrentes_mensal_item" ON public.tarefas_recorrentes_mensal_item FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Public can delete tarefas_recorrentes_mensal_item" ON public.tarefas_recorrentes_mensal_item FOR DELETE USING (true);
+
+-- tarefas_recorrentes_mensal_registro
+ALTER TABLE public.tarefas_recorrentes_mensal_registro ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.tarefas_recorrentes_mensal_registro TO anon, authenticated;
+GRANT ALL ON public.tarefas_recorrentes_mensal_registro TO service_role;
+CREATE POLICY "Public can read tarefas_recorrentes_mensal_registro" ON public.tarefas_recorrentes_mensal_registro FOR SELECT USING (true);
+CREATE POLICY "Public can insert tarefas_recorrentes_mensal_registro" ON public.tarefas_recorrentes_mensal_registro FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public can update tarefas_recorrentes_mensal_registro" ON public.tarefas_recorrentes_mensal_registro FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Public can delete tarefas_recorrentes_mensal_registro" ON public.tarefas_recorrentes_mensal_registro FOR DELETE USING (true);
 
 -- pagamentos_recorrentes
 ALTER TABLE public.pagamentos_recorrentes ENABLE ROW LEVEL SECURITY;
