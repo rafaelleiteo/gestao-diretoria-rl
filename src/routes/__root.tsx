@@ -72,7 +72,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   beforeLoad: async ({ location }) => {
-    if (location.pathname === "/unlock" || location.pathname.startsWith("/convite/")) return;
+    if (location.pathname === "/unlock" || location.pathname === "/auth/callback") return;
     const { unlocked } = await getUnlockStatus();
 
     if (!unlocked) throw redirect({ to: "/unlock" });
@@ -128,15 +128,15 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isUnlock = pathname === "/unlock";
+  const isAuthPage = pathname === "/unlock" || pathname === "/auth/callback";
 
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen" style={{ backgroundColor: "#FFFFFF" }}>
-        {!isUnlock && <TopNav />}
+        {!isAuthPage && <TopNav />}
         <main
           style={{ backgroundColor: "#FAFAFA" }}
-          className={isUnlock ? "min-h-screen" : "min-h-[calc(100vh-57px)]"}
+          className={isAuthPage ? "min-h-screen" : "min-h-[calc(100vh-57px)]"}
         >
           <Outlet />
         </main>

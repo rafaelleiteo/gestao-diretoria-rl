@@ -12,4 +12,23 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (
+              id.includes("/src/lib/") ||
+              id.includes("/src/routes/") ||
+              id.includes("@tanstack") ||
+              id.includes("supabase")
+            ) {
+              return "server-app-core";
+            }
+          },
+        },
+      },
+    },
+  },
 });
+

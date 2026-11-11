@@ -1,12 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
-import { supabase } from "@/integrations/supabase/client";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 export const getPermissions = createServerFn({ method: "GET" })
-  .inputValidator((userId: string) => userId)
+  .validator((userId: string) => userId)
   .handler(async ({ data: userId }) => {
-    const { data, error } = await supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("permissoes_usuario" as any)
       .select("*")
       .eq("usuario_id", userId);
@@ -16,7 +16,7 @@ export const getPermissions = createServerFn({ method: "GET" })
   });
 
 export const savePermissions = createServerFn({ method: "POST" })
-  .inputValidator((data: { userId: string, permissions: { area: string, item_menu: string }[] }) => 
+  .validator((data: { userId: string, permissions: { area: string, item_menu: string }[] }) => 
     z.object({
       userId: z.string(),
       permissions: z.array(z.object({
@@ -54,15 +54,16 @@ export const savePermissions = createServerFn({ method: "POST" })
 
 export const checkPermission = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { area: string, item_menu: string }) => 
+  .validator((data: { area: string, item_menu: string }) => 
     z.object({
       area: z.string(),
       item_menu: z.string()
     }).parse(data)
   )
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Get user profile role
-    const { data: profile, error: profileError } = await context.supabase
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
       .select("role")
       .eq("id", context.userId)
@@ -74,7 +75,7 @@ export const checkPermission = createServerFn({ method: "GET" })
     if (profile.role === "admin") return true;
 
     // Check specific permission or wildcards
-    const { data: perm, error: permissionError } = await context.supabase
+    const { data: perm, error: permissionError } = await supabaseAdmin
       .from("permissoes_usuario" as any)
       .select("id")
       .eq("usuario_id", context.userId)
@@ -90,7 +91,8 @@ export const checkPermission = createServerFn({ method: "GET" })
 export const getMyPermissions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("permissoes_usuario" as any)
       .select("area, item_menu")
       .eq("usuario_id", context.userId);

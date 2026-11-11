@@ -1,8 +1,8 @@
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
-import { getUnlockStatus, unlockSite } from "@/lib/gate.functions";
+import { useEffect, useState } from "react";
+import { getUnlockStatus } from "@/lib/gate.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { processOAuthUserAccess } from "@/lib/auth-gate";
 
 export const Route = createFileRoute("/unlock")({
   head: () => ({
@@ -21,61 +21,58 @@ export const Route = createFileRoute("/unlock")({
 
 function UnlockPage() {
   const router = useRouter();
-  const unlock = useServerFn(unlockSite);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showReset, setShowReset] = useState(false);
-  const [resetEmail, setResetEmail] = useState("");
-  const [resetMsg, setResetMsg] = useState<string | null>(null);
-  const [resetErr, setResetErr] = useState<string | null>(null);
-  const [resetLoading, setResetLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  async function onReset(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setResetMsg(null);
-    setResetErr(null);
-    setResetLoading(true);
-    try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      if (resetError) {
-        setResetErr(resetError.message);
-        return;
-      }
-      setResetMsg("Enviamos um link de redefinição para o seu e-mail.");
-    } catch (err) {
-      setResetErr(err instanceof Error ? err.message : "Falha ao enviar o e-mail.");
-    } finally {
-      setResetLoading(false);
-    }
-  }
+  useEffect(() => {
+    let active = true;
 
+    async function checkAuth() {
+      setLoading(true);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(false);
-    setLoading(true);
-    try {
-      const { ok } = await unlock({ data: { username, password } });
-      if (ok) {
-        const { error: authError } = await supabase.auth.signInWithPassword({
-          email: "rafael@example.com",
-          password,
-        });
-        if (authError) {
-          console.error("Falha ao autenticar o perfil do administrador", authError);
-          setError(true);
-          return;
+      if (!active) return;
+
+      if (user) {
+        const result = await processOAuthUserAccess(user);
+        if (!active) return;
+
+        if (result.success) {
+          await router.invalidate();
+          await router.navigate({ to: "/" });
+        } else {
+          setErrorMessage(result.error);
+          setLoading(false);
         }
-        await router.invalidate();
-        await router.navigate({ to: "/" });
       } else {
-        setError(true);
+        setLoading(false);
       }
-    } finally {
+    }
+
+    checkAuth();
+
+    return () => {
+      active = false;
+    };
+  }, [router]);
+
+  async function handleGoogleLogin() {
+    setErrorMessage(null);
+    setLoading(true);
+
+    const redirectUrl = `${window.location.origin}/auth/callback`;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: redirectUrl,
+      },
+    });
+
+    if (error) {
+      console.error("Erro ao iniciar login com Google:", error);
+      setErrorMessage(error.message);
       setLoading(false);
     }
   }
@@ -85,9 +82,8 @@ function UnlockPage() {
       className="flex min-h-screen items-center justify-center px-4"
       style={{ backgroundColor: "#FAFAFA" }}
     >
-      <form
-        onSubmit={onSubmit}
-        className="w-full max-w-sm rounded-2xl border bg-white p-8"
+      <div
+        className="w-full max-w-sm rounded-2xl border bg-white p-8 shadow-sm text-center"
         style={{ borderColor: "#EDEDED" }}
       >
         <h1
@@ -100,109 +96,42 @@ function UnlockPage() {
           Área restrita. Faça login para continuar.
         </p>
 
-        <div className="mt-6 flex flex-col gap-3">
-          <label className="flex flex-col gap-1">
-            <span className="text-[12px] font-medium" style={{ color: "#6B7280" }}>
-              Usuário
-            </span>
-            <input
-              type="text"
-              autoComplete="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="h-10 rounded-full border bg-[#FAFAFA] px-4 text-[14px] outline-none focus:border-[#4F46E5]"
-              style={{ borderColor: "#EDEDED", color: "#111111" }}
-              required
-            />
-          </label>
+        {errorMessage && (
+          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-left">
+            <p className="text-[13px] font-medium text-red-700">{errorMessage}</p>
+          </div>
+        )}
 
-          <label className="flex flex-col gap-1">
-            <span className="text-[12px] font-medium" style={{ color: "#6B7280" }}>
-              Senha
-            </span>
-            <input
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="h-10 rounded-full border bg-[#FAFAFA] px-4 text-[14px] outline-none focus:border-[#4F46E5]"
-              style={{ borderColor: "#EDEDED", color: "#111111" }}
-              required
-            />
-          </label>
-
-          {error && (
-            <p className="text-[12px]" style={{ color: "#B45309" }}>
-              Usuário ou senha incorretos.
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading || !username || !password}
-            className="mt-2 h-10 rounded-full text-[13px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
-            style={{ backgroundColor: "#4F46E5" }}
-          >
-            {loading ? "Entrando..." : "Entrar"}
-          </button>
-
+        <div className="mt-8">
           <button
             type="button"
-            onClick={() => setShowReset((v) => !v)}
-            className="mt-1 text-[12px] underline"
-            style={{ color: "#6B7280" }}
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            className="flex h-11 w-full items-center justify-center gap-3 rounded-full border bg-white px-5 text-[14px] font-semibold transition-all hover:bg-gray-50 focus:outline-none disabled:opacity-50"
+            style={{ borderColor: "#D1D5DB", color: "#1F2937" }}
           >
-            Esqueci minha senha
+            <svg className="h-5 w-5" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.28v3.15C3.25 21.3 7.31 24 12 24z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.28C.46 8.2.01 10.04.01 12c0 1.96.45 3.8 1.27 5.42l4-3.15z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.28 6.58l4 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+              />
+            </svg>
+            {loading ? "Verificando acesso..." : "Continuar com Google"}
           </button>
         </div>
-      </form>
-
-      {showReset && (
-        <form
-          onSubmit={onReset}
-          className="mt-3 w-full max-w-sm rounded-2xl border bg-white p-6"
-          style={{ borderColor: "#EDEDED" }}
-        >
-          <p className="text-[13px] font-semibold" style={{ color: "#111111" }}>
-            Redefinir senha
-          </p>
-          <label className="mt-3 flex flex-col gap-1">
-            <span className="text-[12px] font-medium" style={{ color: "#6B7280" }}>
-              E-mail
-            </span>
-            <input
-              type="email"
-              autoComplete="email"
-              value={resetEmail}
-              onChange={(e) => setResetEmail(e.target.value)}
-              className="h-10 rounded-full border bg-[#FAFAFA] px-4 text-[14px] outline-none focus:border-[#4F46E5]"
-              style={{ borderColor: "#EDEDED", color: "#111111" }}
-              required
-            />
-          </label>
-
-          {resetErr && (
-            <p className="mt-2 text-[12px]" style={{ color: "#B45309" }}>
-              {resetErr}
-            </p>
-          )}
-          {resetMsg && (
-            <p className="mt-2 text-[12px]" style={{ color: "#111111" }}>
-              {resetMsg}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={resetLoading || !resetEmail}
-            className="mt-3 h-10 w-full rounded-full text-[13px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
-            style={{ backgroundColor: "#4F46E5" }}
-          >
-            {resetLoading ? "Enviando..." : "Enviar link de redefinição"}
-          </button>
-        </form>
-      )}
-
+      </div>
     </div>
   );
 }
