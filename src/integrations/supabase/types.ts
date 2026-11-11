@@ -14,6 +14,160 @@ export type Database = {
   }
   public: {
     Tables: {
+      financeiro_areas: {
+        Row: {
+          id: string
+          nome: string
+          ativo: boolean
+          ordem: number
+          criado_em: string
+        }
+        Insert: {
+          id?: string
+          nome: string
+          ativo?: boolean
+          ordem?: number
+          criado_em?: string
+        }
+        Update: {
+          id?: string
+          nome?: string
+          ativo?: boolean
+          ordem?: number
+          criado_em?: string
+        }
+        Relationships: []
+      }
+      fornecedores_conhecidos: {
+        Row: {
+          id: string
+          padrao_nome: string
+          categoria: string | null
+          area: string | null
+          responsavel: string | null
+          fixo_variavel: string | null
+          carne_leao: string | null
+          divide: string | null
+          observacao_padrao: string | null
+          atualizado_em: string
+        }
+        Insert: {
+          id?: string
+          padrao_nome: string
+          categoria?: string | null
+          area?: string | null
+          responsavel?: string | null
+          fixo_variavel?: string | null
+          carne_leao?: string | null
+          divide?: string | null
+          observacao_padrao?: string | null
+          atualizado_em?: string
+        }
+        Update: {
+          id?: string
+          padrao_nome?: string
+          categoria?: string | null
+          area?: string | null
+          responsavel?: string | null
+          fixo_variavel?: string | null
+          carne_leao?: string | null
+          divide?: string | null
+          observacao_padrao?: string | null
+          atualizado_em?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fornecedores_conhecidos_area_fkey"
+            columns: ["area"]
+            isOneToOne: false
+            referencedRelation: "financeiro_areas"
+            referencedColumns: ["nome"]
+          }
+        ]
+      }
+      financeiro_lancamentos: {
+        Row: {
+          id: string
+          compra_id: string
+          data: string
+          competencia: string
+          empresa: string
+          descricao: string | null
+          categoria: string | null
+          area: string | null
+          valor: number
+          pago: boolean
+          forma_pagamento: string | null
+          responsavel: string | null
+          fixo_variavel: string | null
+          carne_leao: string | null
+          observacao: string | null
+          divide: string | null
+          parcelas_totais: number
+          parcela_atual: number
+          valor_total: number
+          status: string
+          criado_em: string
+          validado_em: string | null
+        }
+        Insert: {
+          id?: string
+          compra_id?: string
+          data: string
+          competencia: string
+          empresa: string
+          descricao?: string | null
+          categoria?: string | null
+          area?: string | null
+          valor: number
+          pago?: boolean
+          forma_pagamento?: string | null
+          responsavel?: string | null
+          fixo_variavel?: string | null
+          carne_leao?: string | null
+          observacao?: string | null
+          divide?: string | null
+          parcelas_totais?: number
+          parcela_atual?: number
+          valor_total: number
+          status?: string
+          criado_em?: string
+          validado_em?: string | null
+        }
+        Update: {
+          id?: string
+          compra_id?: string
+          data?: string
+          competencia?: string
+          empresa?: string
+          descricao?: string | null
+          categoria?: string | null
+          area?: string | null
+          valor?: number
+          pago?: boolean
+          forma_pagamento?: string | null
+          responsavel?: string | null
+          fixo_variavel?: string | null
+          carne_leao?: string | null
+          observacao?: string | null
+          divide?: string | null
+          parcelas_totais?: number
+          parcela_atual?: number
+          valor_total?: number
+          status?: string
+          criado_em?: string
+          validado_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financeiro_lancamentos_area_fkey"
+            columns: ["area"]
+            isOneToOne: false
+            referencedRelation: "financeiro_areas"
+            referencedColumns: ["nome"]
+          }
+        ]
+      }
       configuracao_documentos: {
         Row: {
           cabecalho_texto: string | null

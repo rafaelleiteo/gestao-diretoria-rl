@@ -33,50 +33,60 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
     
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const SUPABASE_KEY =
+      process.env.VITE_SUPABASE_ANON_KEY ||
+      process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+      process.env.SUPABASE_ANON_KEY ||
+      process.env.SUPABASE_PUBLISHABLE_KEY;
 
-    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
       const missing = [
         ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
-        ...(!SUPABASE_PUBLISHABLE_KEY ? ['SUPABASE_PUBLISHABLE_KEY'] : []),
+        ...(!SUPABASE_KEY ? ['SUPABASE_KEY'] : []),
       ];
-      const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Connect Supabase in Lovable Cloud.`;
-      console.error(`[Supabase] ${message}`);
+      const message = `[requireSupabaseAuth] Missing Supabase environment variable(s): ${missing.join(', ')}.`;
+      console.error(message);
       throw new Error(message);
     }
     
     const request = getRequest();
 
     if (!request?.headers) {
+      console.error('[requireSupabaseAuth] ERRO: No request headers available');
       throw new Error('Unauthorized: No request headers available');
     }
 
     const authHeader = request.headers.get('authorization');
+    console.log('[requireSupabaseAuth] Header authorization recebido:', authHeader ? `${authHeader.substring(0, 15)}... (len: ${authHeader.length})` : 'NULL');
 
     if (!authHeader) {
+      console.error('[requireSupabaseAuth] ERRO: No authorization header provided');
       throw new Error('Unauthorized: No authorization header provided');
     }
 
     if (!authHeader.startsWith('Bearer ')) {
+      console.error('[requireSupabaseAuth] ERRO: Only Bearer tokens are supported');
       throw new Error('Unauthorized: Only Bearer tokens are supported');
     }
 
     const token = authHeader.replace('Bearer ', '');
     if (!token) {
+      console.error('[requireSupabaseAuth] ERRO: No token provided');
       throw new Error('Unauthorized: No token provided');
     }
 
     if (token.split('.').length !== 3) {
+      console.error('[requireSupabaseAuth] ERRO: Invalid JWT format (parts !== 3)');
       throw new Error('Unauthorized: Invalid token');
     }
 
     const supabase = createClient<Database>(
       SUPABASE_URL!,
-      SUPABASE_PUBLISHABLE_KEY!,
+      SUPABASE_KEY!,
       {
         global: {
-          fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY!),
+          fetch: createSupabaseFetch(SUPABASE_KEY!),
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -91,12 +101,16 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
 
     const { data, error } = await supabase.auth.getClaims(token);
     if (error || !data?.claims) {
+      console.error('[requireSupabaseAuth] ERRO em getClaims(token):', error);
       throw new Error('Unauthorized: Invalid token');
     }
 
     if (!data.claims.sub) {
+      console.error('[requireSupabaseAuth] ERRO: No sub (userId) found in token claims');
       throw new Error('Unauthorized: No user ID found in token');
     }
+
+    console.log('[requireSupabaseAuth] Sucesso! User ID validado:', data.claims.sub);
 
     return next({
       context: {

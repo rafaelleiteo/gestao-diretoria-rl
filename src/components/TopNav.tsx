@@ -48,6 +48,7 @@ export function TopNav() {
     let active = true;
 
     async function loadAccess() {
+      console.log("[DIAG_NAV] TopNav: Iniciando loadAccess()...");
       const [profileResult, permissionsResult] = await Promise.allSettled([
         fetchCurrentUser(),
         fetchMyPermissions(),
@@ -57,19 +58,30 @@ export function TopNav() {
 
       if (profileResult.status === "fulfilled") {
         const profile = profileResult.value;
-        console.info("[auth-debug] perfil atual", profile
-          ? { id: profile.id, role: profile.role, status: profile.status }
-          : null);
+        console.log("[DIAG_NAV] TopNav: profileResult FULFILLED ->", profile);
         setUser(profile);
       } else {
-        console.error("Falha ao carregar o perfil atual", profileResult.reason);
+        console.error("[DIAG_NAV] TopNav: profileResult REJECTED! Motivo exato:", {
+          component: "TopNav",
+          function: "getCurrentUser",
+          reason: profileResult.reason,
+          message: profileResult.reason?.message,
+          stack: profileResult.reason?.stack,
+        });
         toast.error("Não foi possível carregar seu perfil");
       }
 
       if (permissionsResult.status === "fulfilled") {
+        console.log("[DIAG_NAV] TopNav: permissionsResult FULFILLED ->", permissionsResult.value);
         setMyPermissions(permissionsResult.value);
       } else {
-        console.error("Falha ao carregar permissões", permissionsResult.reason);
+        console.error("[DIAG_NAV] TopNav: permissionsResult REJECTED! Motivo exato:", {
+          component: "TopNav",
+          function: "getMyPermissions",
+          reason: permissionsResult.reason,
+          message: permissionsResult.reason?.message,
+          stack: permissionsResult.reason?.stack,
+        });
       }
 
       setIsLoadingUser(false);
@@ -118,21 +130,18 @@ export function TopNav() {
     }
     setSubmitting(true);
     try {
-      const { token } = await invite({
+      await invite({
         data: { nome: newUserName, email: newUserEmail, permissions: invitePermissions },
       });
-      const inviteLink = `${window.location.origin}/convite/${token}`;
 
-      toast.success("Convite criado com as permissões definidas!");
+      toast.success(
+        `Peça para ${newUserEmail} entrar na plataforma e clicar em Continuar com Google — o acesso é liberado automaticamente.`,
+        { duration: 6000 }
+      );
       closeAddForm();
       fetchUsers().then(setUsers);
-
-      // Copy to clipboard immediately
-      await navigator.clipboard.writeText(inviteLink);
-      toast.info("Link de convite copiado!");
     } catch (err: any) {
       toast.error(err.message || "Erro ao convidar");
-
     } finally {
       setSubmitting(false);
     }
@@ -363,7 +372,7 @@ export function TopNav() {
                         ? "Continuar"
                         : submitting
                           ? "Salvando..."
-                          : "Salvar e Gerar Link"}
+                          : "Salvar Convite"}
                     </button>
                   </div>
                 </form>
@@ -391,7 +400,7 @@ export function TopNav() {
                             ? { backgroundColor: "#ECFDF5", color: "#047857" }
                             : { backgroundColor: "#FFFBEB", color: "#B45309" }}
                         >
-                          {u.status === "ativo" ? "Ativo" : "Convite pendente"}
+                          {u.status === "ativo" ? "Ativo" : "Aguardando login Google"}
                         </span>
                       </div>
                       <span className="text-[12px] text-[#6B7280]">{u.email}</span>
@@ -399,21 +408,6 @@ export function TopNav() {
 
 
                     <div className="flex items-center gap-2">
-                      {u.convite_token && u.status !== "ativo" && (
-                        <button
-                          onClick={() => {
-                            const link = `${window.location.origin}/convite/${u.convite_token}`;
-                            navigator.clipboard.writeText(link);
-                            toast.success("Link copiado!");
-                          }}
-                          className="flex h-8 w-8 items-center justify-center rounded-full border text-[#6B7280] hover:bg-white"
-                          style={{ borderColor: "#EDEDED" }}
-                          title="Copiar link de convite"
-                        >
-                          <Copy size={14} />
-                        </button>
-                      )}
-                      
                       {u.id !== user?.id && (
                         <>
                           {u.role === "colaborador" && !u.isConvite && (

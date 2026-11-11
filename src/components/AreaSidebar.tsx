@@ -12,6 +12,7 @@ export type SidebarMenuItem = {
   label: string;
   icon: LucideIcon;
   exact?: boolean;
+  adminOnly?: boolean;
 };
 
 type Props = {
@@ -35,6 +36,7 @@ export function AreaSidebarLayout({ title, menu, children }: Props) {
     let active = true;
 
     async function loadAccess() {
+      console.log("[DIAG_NAV] AreaSidebar: Iniciando loadAccess()...");
       const [profileResult, permissionsResult] = await Promise.allSettled([
         fetchCurrentUser(),
         fetchMyPermissions(),
@@ -43,16 +45,30 @@ export function AreaSidebarLayout({ title, menu, children }: Props) {
       if (!active) return;
 
       if (profileResult.status === "fulfilled") {
+        console.log("[DIAG_NAV] AreaSidebar: profileResult FULFILLED ->", profileResult.value);
         setUser(profileResult.value);
       } else {
-        console.error("Falha ao carregar o perfil atual", profileResult.reason);
+        console.error("[DIAG_NAV] AreaSidebar: profileResult REJECTED! Motivo exato:", {
+          component: "AreaSidebar",
+          function: "getCurrentUser",
+          reason: profileResult.reason,
+          message: profileResult.reason?.message,
+          stack: profileResult.reason?.stack,
+        });
         toast.error("Não foi possível carregar seu perfil");
       }
 
       if (permissionsResult.status === "fulfilled") {
+        console.log("[DIAG_NAV] AreaSidebar: permissionsResult FULFILLED ->", permissionsResult.value);
         setMyPermissions(permissionsResult.value);
       } else {
-        console.error("Falha ao carregar permissões", permissionsResult.reason);
+        console.error("[DIAG_NAV] AreaSidebar: permissionsResult REJECTED! Motivo exato:", {
+          component: "AreaSidebar",
+          function: "getMyPermissions",
+          reason: permissionsResult.reason,
+          message: permissionsResult.reason?.message,
+          stack: permissionsResult.reason?.stack,
+        });
       }
 
       setIsLoadingUser(false);
@@ -69,22 +85,40 @@ export function AreaSidebarLayout({ title, menu, children }: Props) {
   const filteredMenu = useMemo(() => {
     if (isLoadingUser) return [];
     if (!user) return [];
-    if (user.role === "admin") return menu;
+
+    const visibleMenu = menu.filter((item) => {
+      if (item.adminOnly && user.role !== "admin") return false;
+      return true;
+    });
+
+    if (user.role === "admin") return visibleMenu;
 
     const areaPerms = myPermissions.filter(p => p.area === slugFromTitle);
     const hasAreaFull = areaPerms.some(p => p.item_menu === "*");
 
-    if (hasAreaFull) return menu;
+    if (hasAreaFull) return visibleMenu;
 
-    return menu.filter(item => {
+    return visibleMenu.filter(item => {
       const itemKey = item.to.split("/").pop() || "index";
       return areaPerms.some(p => p.item_menu === itemKey);
     });
-  }, [user, myPermissions, menu, slugFromTitle]);
+  }, [user, myPermissions, menu, slugFromTitle, isLoadingUser]);
 
   // Authorization check
   useEffect(() => {
     if (!isLoadingUser && user && user.role !== "admin") {
+      const currentMenuItem = menu.find((item) => {
+        return item.exact
+          ? pathname === item.to
+          : pathname === item.to || pathname.startsWith(item.to + "/");
+      });
+
+      if (currentMenuItem?.adminOnly) {
+        toast.error("Acesso restrito a administradores");
+        router.navigate({ to: "/" });
+        return;
+      }
+
       const areaPerms = myPermissions.filter(p => p.area === slugFromTitle);
       const hasAccess = areaPerms.length > 0;
       
@@ -101,7 +135,7 @@ export function AreaSidebarLayout({ title, menu, children }: Props) {
         router.navigate({ to: `/${slugFromTitle}` });
       }
     }
-  }, [user, myPermissions, pathname, router, slugFromTitle]);
+  }, [user, myPermissions, pathname, router, slugFromTitle, isLoadingUser, menu]);
 
 
   // Close drawer on route change
