@@ -1,4 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 import { type AreaValue } from "./areas";
 
 export type LinkRapido = {
@@ -9,7 +10,7 @@ export type LinkRapido = {
   criado_em: string;
 };
 
-export async function getLinksByArea(area: AreaValue) {
+export async function getLinksByArea(supabase: SupabaseClient<Database>, area: AreaValue) {
   const { data, error } = await supabase
     .from("links_rapidos")
     .select("*")
@@ -20,7 +21,7 @@ export async function getLinksByArea(area: AreaValue) {
   return data as LinkRapido[];
 }
 
-export async function createLink(area: AreaValue, titulo: string, url: string) {
+export async function createLink(supabase: SupabaseClient<Database>, area: AreaValue, titulo: string, url: string) {
   const { data, error } = await supabase
     .from("links_rapidos")
     .insert([{ area, titulo, url }])
@@ -31,7 +32,7 @@ export async function createLink(area: AreaValue, titulo: string, url: string) {
   return data as LinkRapido;
 }
 
-export async function deleteLink(id: string) {
+export async function deleteLink(supabase: SupabaseClient<Database>, id: string) {
   const { error } = await supabase.from("links_rapidos").delete().eq("id", id);
   if (error) throw error;
   return true;
