@@ -70,8 +70,8 @@ Numeração da versão de 11/11/2026 deste arquivo.
 1. **Storage**: as policies do bucket `documento-timbre` valem para `public` (anon pode inserir, alterar e apagar). Conferir o resultado do bloco A.7 antes de propor SQL, pois o storage é compartilhado com o consultório.
 2. **Endpoints `/api/public/hooks/*`** sem segredo.
 3. **Crons**: os lembretes apontam para o domínio `lovable.app`, e o resumo diário das 7h não existe no banco novo.
-4. **Legado do Lovable**: verificar se o site e o banco antigos estão ativos e se há dados novos só lá (as contagens das tabelas em 12/11 eram idênticas às da migração de setembro).
-5. **Rotacionar segredos expostos em conversas.**
+4. **Legado do Lovable**: verificar se o site e o banco antigos estão ativos e se há dados novos só lá (as contagens das tabelas em 12/11 eram idênticas às da migração de setembro), e desconectar a integração do Lovable com o GitHub (o ruleset já bloqueia push dele no main).
+5. **Rotacionar segredos expostos em conversas**: `TELEGRAM_BOT_TOKEN`, `SITE_PASSWORD`, `SESSION_SECRET`.
 6. **Supabase Free**: pausa após 7 dias, junto com o consultório.
 7. **Metas**:
    - o trigger roda só em UPDATE (meta criada já concluída fica sem `concluido_em`);
@@ -79,7 +79,7 @@ Numeração da versão de 11/11/2026 deste arquivo.
    - importar o levantamento real da Versa3D;
    - tela Pauta de terça.
 8. **PermissionsPanel** ainda oferece itens que agora são somente admin (Rotina e as 12 tabelas).
-9. **Higiene**: 4 erros antigos de `tsc` em `$area.protocolos.tsx`, erros de lint antigos, Ignored Build Step, `.gitattributes`, `bun.lock`, branches antigas.
+9. **Higiene**: 4 erros antigos de `tsc` em `$area.protocolos.tsx`, erros de lint antigos, Ignored Build Step, `.gitattributes`, `bun.lock`, branches antigas, código morto (login por senha, scripts de teste).
 
 ## 4. Lições
 
