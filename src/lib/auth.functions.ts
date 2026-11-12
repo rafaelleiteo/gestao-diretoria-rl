@@ -2,32 +2,62 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
+// Seguranca: o userId e o e-mail NAO vem do navegador. O userId vem do token validado
+// (requireSupabaseAuth) e o e-mail vem do proprio Supabase Auth, e so e aceito se houver
+// uma identidade Google com esse mesmo e-mail. userId e email enviados pelo navegador
+// continuam aceitos no formato, mas sao ignorados.
+const ACESSO_NEGADO = {
+  success: false as const,
+  error: "Seu e-mail não tem acesso a esta plataforma. Peça um convite ao administrador.",
+};
+
 export const verifyAndRegisterOAuthAccess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((data: unknown) =>
     z
       .object({
-        userId: z.string().min(1),
-        email: z.string().email(),
+        userId: z.string().optional(),
+        email: z.string().optional(),
         googleName: z.string().optional(),
       })
       .parse(data)
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const email = data.email.trim().toLowerCase();
+    const userId = context.userId;
+
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const authUser = authData?.user;
+    const authEmail = authUser?.email?.trim().toLowerCase();
+    const temGoogleComEsseEmail = (authUser?.identities ?? []).some(
+      (i) =>
+        i.provider === "google" &&
+        String((i.identity_data as { email?: unknown } | undefined)?.email ?? "")
+          .trim()
+          .toLowerCase() === authEmail
+    );
+    if (authError || !authUser || !authEmail || !temGoogleComEsseEmail) {
+      console.warn("[LOG_DIAGNOSTICO] [SERVER_FN] Usuário sem e-mail Google verificado. Acesso negado.", {
+        userId,
+        authError: authError?.message,
+      });
+      return ACESSO_NEGADO;
+    }
+
+    const email = authEmail;
     const userName = data.googleName || email.split("@")[0];
 
     console.log("[LOG_DIAGNOSTICO] [SERVER_FN] Início do processamento de acesso:");
-    console.log("[LOG_DIAGNOSTICO] [SERVER_FN]   - data.userId:", data.userId);
-    console.log("[LOG_DIAGNOSTICO] [SERVER_FN]   - data.email:", email);
+    console.log("[LOG_DIAGNOSTICO] [SERVER_FN]   - userId (token):", userId);
+    console.log("[LOG_DIAGNOSTICO] [SERVER_FN]   - email (Supabase Auth):", email);
     console.log("[LOG_DIAGNOSTICO] [SERVER_FN]   - data.googleName:", data.googleName);
 
     // 1. Check if profile exists by user ID
-    console.log("[LOG_DIAGNOSTICO] [SERVER_FN] Query 1: SELECT * FROM public.profiles WHERE id = data.userId");
+    console.log("[LOG_DIAGNOSTICO] [SERVER_FN] Query 1: SELECT * FROM public.profiles WHERE id = userId");
     const { data: profileById, error: pIdError } = await supabaseAdmin
       .from("profiles")
       .select("*")
-      .eq("id", data.userId)
+      .eq("id", userId)
       .maybeSingle();
 
     console.log("[LOG_DIAGNOSTICO] [SERVER_FN] Resultado Query 1 (por ID):", {
@@ -63,12 +93,12 @@ export const verifyAndRegisterOAuthAccess = createServerFn({ method: "POST" })
 
     if (profileByEmail) {
       const oldId = profileByEmail.id;
-      console.log("[LOG_DIAGNOSTICO] [SERVER_FN] Perfil migração encontrado por e-mail! ID antigo:", oldId, "-> Novo ID:", data.userId);
+      console.log("[LOG_DIAGNOSTICO] [SERVER_FN] Perfil migração encontrado por e-mail! ID antigo:", oldId, "-> Novo ID:", userId);
 
       // Update permissoes_usuario if any
       const { error: permUpdateErr } = await supabaseAdmin
         .from("permissoes_usuario" as any)
-        .update({ usuario_id: data.userId } as any)
+        .update({ usuario_id: userId } as any)
         .eq("usuario_id", oldId);
 
       if (permUpdateErr) {
@@ -79,7 +109,7 @@ export const verifyAndRegisterOAuthAccess = createServerFn({ method: "POST" })
       const { error: updateError } = await supabaseAdmin
         .from("profiles")
         .update({
-          id: data.userId,
+          id: userId,
           status: "ativo",
         } as any)
         .eq("id", oldId);
@@ -113,7 +143,7 @@ export const verifyAndRegisterOAuthAccess = createServerFn({ method: "POST" })
       const { error: createProfileError } = await supabaseAdmin
         .from("profiles")
         .insert({
-          id: data.userId,
+          id: userId,
           nome: nameToUse,
           email: convite.email,
           role: "colaborador",
@@ -141,7 +171,7 @@ export const verifyAndRegisterOAuthAccess = createServerFn({ method: "POST" })
           .from("permissoes_usuario" as any)
           .insert(
             (convitePerms as any[]).map((p) => ({
-              usuario_id: data.userId,
+              usuario_id: userId,
               area: p.area,
               item_menu: p.item_menu,
             }))
@@ -173,7 +203,7 @@ export const verifyAndRegisterOAuthAccess = createServerFn({ method: "POST" })
       const { error: createAdminError } = await supabaseAdmin
         .from("profiles")
         .insert({
-          id: data.userId,
+          id: userId,
           nome: userName || "Rafael Leite",
           email: email,
           role: "admin",
