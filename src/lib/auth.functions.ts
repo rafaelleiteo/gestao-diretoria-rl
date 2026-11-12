@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { exigirAdmin } from "@/lib/admin.server";
 
 // Seguranca: o userId e o e-mail NAO vem do navegador. O userId vem do token validado
 // (requireSupabaseAuth) e o e-mail vem do proprio Supabase Auth, e so e aceito se houver
@@ -246,7 +247,9 @@ export const getCurrentUser = createServerFn({ method: "GET" })
   });
 
 export const listUsers = createServerFn({ method: "GET" })
-  .handler(async () => {
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: profiles, error } = await supabaseAdmin
       .from("profiles")
@@ -281,6 +284,7 @@ export const listUsers = createServerFn({ method: "GET" })
   });
 
 export const inviteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((data: unknown) =>
     z.object({
       nome: z.string().min(1),
@@ -290,7 +294,8 @@ export const inviteUser = createServerFn({ method: "POST" })
         .default([]),
     }).parse(data)
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const token = crypto.randomUUID();
 
@@ -324,8 +329,10 @@ export const inviteUser = createServerFn({ method: "POST" })
   });
 
 export const deleteInvite = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((id: string) => id)
-  .handler(async ({ data: id }) => {
+  .handler(async ({ data: id, context }) => {
+    await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("convites").delete().eq("id", id);
     if (error) throw error;
@@ -333,8 +340,10 @@ export const deleteInvite = createServerFn({ method: "POST" })
   });
 
 export const deleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((id: string) => id)
-  .handler(async ({ data: id }) => {
+  .handler(async ({ data: id, context }) => {
+    await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     
     // Get the profile to get the email

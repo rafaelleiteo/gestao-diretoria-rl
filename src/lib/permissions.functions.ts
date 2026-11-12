@@ -1,10 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { exigirAdmin } from "@/lib/admin.server";
 
 export const getPermissions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
   .validator((userId: string) => userId)
-  .handler(async ({ data: userId }) => {
+  .handler(async ({ data: userId, context }) => {
+    await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("permissoes_usuario" as any)
@@ -16,6 +19,7 @@ export const getPermissions = createServerFn({ method: "GET" })
   });
 
 export const savePermissions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((data: { userId: string, permissions: { area: string, item_menu: string }[] }) => 
     z.object({
       userId: z.string(),
@@ -25,7 +29,8 @@ export const savePermissions = createServerFn({ method: "POST" })
       }))
     }).parse(data)
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // 1. Delete existing permissions for this user
