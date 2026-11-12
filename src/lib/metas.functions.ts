@@ -13,6 +13,7 @@ import {
   type Meta,
   type PreviaImportacao,
 } from "@/lib/metas";
+import { exigirAdmin } from "@/lib/admin.server";
 
 // Seguranca:
 // 1. Toda funcao exige login (requireSupabaseAuth) e chama exigirAdmin antes de qualquer acao.
@@ -22,19 +23,6 @@ import {
 //    entao a RLS da tabela (is_admin(auth.uid())) tambem e aplicada.
 
 type Ctx = { supabase: unknown; userId: string };
-
-async function exigirAdmin(context: Ctx): Promise<void> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin
-    .from("profiles")
-    .select("role")
-    .eq("id", context.userId)
-    .maybeSingle();
-  if (error) throw new Error("Não foi possível verificar o acesso.");
-  if (!data || data.role !== "admin") {
-    throw new Error("Acesso restrito a administradores");
-  }
-}
 
 // A tabela metas ainda nao esta em types.ts (arquivo gerado); acesso sem tipagem do banco.
 function metas(context: Ctx) {

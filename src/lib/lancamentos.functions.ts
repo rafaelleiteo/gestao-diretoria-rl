@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { exigirAdmin } from "@/lib/admin.server";
 
 function addMonthsToCompetencia(comp: string, monthsToAdd: number): string {
   if (!comp) return comp;
@@ -49,7 +50,8 @@ function addMonthsToDateString(dateStr: string, monthsToAdd: number): string {
 
 export const getFinanceiroAreas = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .handler(async ({ context }) => {
+    await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("financeiro_areas")
@@ -63,7 +65,8 @@ export const getFinanceiroAreas = createServerFn({ method: "GET" })
 export const createFinanceiroArea = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: unknown) => z.object({ nome: z.string().min(1) }).parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const nomeTrimmed = data.nome.trim();
 
@@ -100,7 +103,8 @@ export const createFinanceiroArea = createServerFn({ method: "POST" })
 export const deactivateFinanceiroArea = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: unknown) => z.object({ id: z.string().min(1) }).parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("financeiro_areas")
@@ -116,7 +120,8 @@ export const getLancamentos = createServerFn({ method: "GET" })
   .validator((data: unknown) =>
     z.object({ status: z.enum(["pendente", "validado"]) }).parse(data)
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: items, error } = await supabaseAdmin
       .from("financeiro_lancamentos")
@@ -132,7 +137,8 @@ export const getLancamentos = createServerFn({ method: "GET" })
 export const importLancamentosLote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: unknown) => z.object({ jsonText: z.string().min(1) }).parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     let items: any[] = [];
@@ -273,7 +279,8 @@ export const updateLancamento = createServerFn({ method: "POST" })
       })
       .parse(data)
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("financeiro_lancamentos")
@@ -287,7 +294,8 @@ export const updateLancamento = createServerFn({ method: "POST" })
 export const deleteLancamento = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: unknown) => z.object({ id: z.string().min(1) }).parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("financeiro_lancamentos")
@@ -303,7 +311,8 @@ export const validarLancamentos = createServerFn({ method: "POST" })
   .validator((data: unknown) =>
     z.object({ ids: z.array(z.string().min(1)).min(1) }).parse(data)
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const nowIso = new Date().toISOString();
 
@@ -367,7 +376,8 @@ export const voltarParaPendente = createServerFn({ method: "POST" })
   .validator((data: unknown) =>
     z.object({ ids: z.array(z.string().min(1)).min(1) }).parse(data)
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("financeiro_lancamentos")
@@ -383,7 +393,8 @@ export const voltarParaPendente = createServerFn({ method: "POST" })
 
 export const getFornecedoresConhecidos = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .handler(async ({ context }) => {
+    await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("fornecedores_conhecidos")
@@ -396,7 +407,8 @@ export const getFornecedoresConhecidos = createServerFn({ method: "GET" })
 
 export const getDashboardLancamentos = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .handler(async ({ context }) => {
+    await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("financeiro_lancamentos")
