@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { exigirAdmin } from "@/lib/admin.server";
 import { z } from "zod";
 
 const cardSchema = z.object({
@@ -13,7 +15,9 @@ const cardSchema = z.object({
 });
 
 export const getRotinaCards = createServerFn({ method: "GET" })
-  .handler(async () => {
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await exigirAdmin(context);
     const { data, error } = await supabaseAdmin
       .from("rotina_cards")
       .select("*")
@@ -24,11 +28,13 @@ export const getRotinaCards = createServerFn({ method: "GET" })
   });
 
 export const saveRotinaCard = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((data: any) => z.object({
     id: z.string().optional(),
     ...cardSchema.shape
   }).parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
     const { id, ...payload } = data;
     if (id) {
       const { data: updated, error } = await supabaseAdmin
@@ -51,8 +57,10 @@ export const saveRotinaCard = createServerFn({ method: "POST" })
   });
 
 export const deleteRotinaCard = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((data: any) => z.object({ id: z.string() }).parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
     const { error } = await supabaseAdmin
       .from("rotina_cards")
       .delete()
@@ -62,6 +70,7 @@ export const deleteRotinaCard = createServerFn({ method: "POST" })
   });
 
 export const batchUpdateRotinaCards = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((data: any) => z.array(z.object({
     id: z.string(),
     tab: z.string(),
@@ -69,7 +78,8 @@ export const batchUpdateRotinaCards = createServerFn({ method: "POST" })
     ordem: z.number(),
     concluido: z.boolean().optional(),
   })).parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
     for (const card of data) {
       await supabaseAdmin
         .from("rotina_cards")
@@ -85,13 +95,15 @@ export const batchUpdateRotinaCards = createServerFn({ method: "POST" })
   });
 
 export const restoreDefaultRotina = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((data: any) => z.object({ 
     tab: z.string().optional(),
     dia: z.string().optional(),
     all: z.boolean().optional(),
     cards: z.array(z.any())
   }).parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
     let query = supabaseAdmin.from("rotina_cards").delete();
     
     if (data.all) {
