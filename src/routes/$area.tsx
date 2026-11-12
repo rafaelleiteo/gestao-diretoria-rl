@@ -4,7 +4,8 @@ import { InboxList } from "@/components/Inbox";
 import { AreaSummary } from "@/components/InboxSummary";
 import { TarefasRecorrentesModule } from "@/components/TarefasRecorrentes";
 import { AreaSidebarLayout, type SidebarMenuItem } from "@/components/AreaSidebar";
-import { Inbox as InboxIcon, Link as LinkIcon, FileText } from "lucide-react";
+import { Inbox as InboxIcon, Link as LinkIcon, FileText, Target } from "lucide-react";
+import { areaMetasHabilitada } from "@/lib/metas";
 
 export const Route = createFileRoute("/$area")({
   loader: ({ params }) => {
@@ -41,6 +42,9 @@ function AreaLayout() {
     { to: `/${slug}`, label: "Visão Geral", icon: InboxIcon, exact: true },
     { to: `/${slug}/protocolos`, label: "Protocolos", icon: FileText },
     { to: `/${slug}/links`, label: "Links", icon: LinkIcon },
+    ...(areaMetasHabilitada(slug)
+      ? [{ to: `/${slug}/metas`, label: "Metas", icon: Target, adminOnly: true }]
+      : []),
   ];
 
   // Specific areas might have their own layouts defined in separate files (consultorio.tsx, gestao.tsx, financeiro.tsx)

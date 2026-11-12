@@ -20,6 +20,7 @@ import { Route as ProtocolosRouteImport } from './routes/protocolos'
 import { Route as UnlockRouteImport } from './routes/unlock'
 import { Route as AreaIndexRouteImport } from './routes/$area.index'
 import { Route as AreaLinksRouteImport } from './routes/$area.links'
+import { Route as AreaMetasRouteImport } from './routes/$area.metas'
 import { Route as AreaProtocolosRouteImport } from './routes/$area.protocolos'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ConsultorioIndexRouteImport } from './routes/consultorio.index'
@@ -93,6 +94,11 @@ const AreaIndexRoute = AreaIndexRouteImport.update({
 const AreaLinksRoute = AreaLinksRouteImport.update({
   id: '/links',
   path: '/links',
+  getParentRoute: () => AreaRoute,
+} as any)
+const AreaMetasRoute = AreaMetasRouteImport.update({
+  id: '/metas',
+  path: '/metas',
   getParentRoute: () => AreaRoute,
 } as any)
 const AreaProtocolosRoute = AreaProtocolosRouteImport.update({
@@ -209,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/protocolos': typeof ProtocolosRoute
   '/unlock': typeof UnlockRoute
   '/$area/links': typeof AreaLinksRoute
+  '/$area/metas': typeof AreaMetasRoute
   '/$area/protocolos': typeof AreaProtocolosRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
@@ -237,6 +244,7 @@ export interface FileRoutesByTo {
   '/protocolos': typeof ProtocolosRoute
   '/unlock': typeof UnlockRoute
   '/$area/links': typeof AreaLinksRoute
+  '/$area/metas': typeof AreaMetasRoute
   '/$area/protocolos': typeof AreaProtocolosRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
@@ -270,6 +278,7 @@ export interface FileRoutesById {
   '/protocolos': typeof ProtocolosRoute
   '/unlock': typeof UnlockRoute
   '/$area/links': typeof AreaLinksRoute
+  '/$area/metas': typeof AreaMetasRoute
   '/$area/protocolos': typeof AreaProtocolosRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/consultorio/ficha-planejamento': typeof ConsultorioFichaPlanejamentoRoute
@@ -304,6 +313,7 @@ export interface FileRouteTypes {
     | '/protocolos'
     | '/unlock'
     | '/$area/links'
+    | '/$area/metas'
     | '/$area/protocolos'
     | '/auth/callback'
     | '/consultorio/ficha-planejamento'
@@ -332,6 +342,7 @@ export interface FileRouteTypes {
     | '/protocolos'
     | '/unlock'
     | '/$area/links'
+    | '/$area/metas'
     | '/$area/protocolos'
     | '/auth/callback'
     | '/consultorio/ficha-planejamento'
@@ -364,6 +375,7 @@ export interface FileRouteTypes {
     | '/protocolos'
     | '/unlock'
     | '/$area/links'
+    | '/$area/metas'
     | '/$area/protocolos'
     | '/auth/callback'
     | '/consultorio/ficha-planejamento'
@@ -478,6 +490,13 @@ declare module '@tanstack/react-router' {
       path: '/links'
       fullPath: '/$area/links'
       preLoaderRoute: typeof AreaLinksRouteImport
+      parentRoute: typeof AreaRoute
+    }
+    '/$area/metas': {
+      id: '/$area/metas'
+      path: '/metas'
+      fullPath: '/$area/metas'
+      preLoaderRoute: typeof AreaMetasRouteImport
       parentRoute: typeof AreaRoute
     }
     '/$area/protocolos': {
@@ -618,12 +637,14 @@ declare module '@tanstack/react-router' {
 
 interface AreaRouteChildren {
   AreaLinksRoute: typeof AreaLinksRoute
+  AreaMetasRoute: typeof AreaMetasRoute
   AreaProtocolosRoute: typeof AreaProtocolosRoute
   AreaIndexRoute: typeof AreaIndexRoute
 }
 
 const AreaRouteChildren: AreaRouteChildren = {
   AreaLinksRoute: AreaLinksRoute,
+  AreaMetasRoute: AreaMetasRoute,
   AreaProtocolosRoute: AreaProtocolosRoute,
   AreaIndexRoute: AreaIndexRoute,
 }
