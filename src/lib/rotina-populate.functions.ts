@@ -1,12 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { exigirAdmin } from "@/lib/admin.server";
 import { z } from "zod";
 
 export const populateRotinaDefaults = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((data: any) => z.object({
     cards: z.array(z.any())
   }).parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
     // 1. Delete all existing records
     const { error: delError } = await supabaseAdmin
       .from("rotina_cards")
