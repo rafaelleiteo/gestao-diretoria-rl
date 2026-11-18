@@ -1,0 +1,202 @@
+-- =====================================================================
+-- REVERSAO de supabase/proposals/20261112_metas_limpeza.sql
+-- Arquivo: supabase/proposals/20261112_metas_limpeza_reversao.sql
+--
+-- SOMENTE PROPOSTA. Nada aqui foi executado no Supabase.
+-- TUDO COMENTADO. Descomente somente se for desfazer.
+--
+-- AVISO: esta reversao so e util enquanto nao houver metas reais com
+-- valores que o check antigo recusaria. Se houver, apague-as ou ajuste
+-- antes. Pela forma como os checks foram desenhados, o antigo aceita tudo
+-- o que o novo aceita (o novo e um subconjunto), entao os riscos reais
+-- sao outros dois, conferidos no bloco R.A:
+--   1) uma meta real com o mesmo projeto e titulo de uma meta de teste
+--      ("meta teste 1/2/3" em Versa3D, Versa3D Medidor, Versa3D Inicial)
+--      faria o insert do R.B falhar pelo indice unico (nada e gravado);
+--   2) metas reais criadas ja concluidas depois da mudanca continuam com
+--      o concluido_em que receberam; o trigger antigo so volta a valer
+--      para os proximos UPDATEs (e deixa de preencher em INSERT).
+-- Lembre tambem que reverter traz o Daniel de volta como opcao valida no
+-- banco, e a tela (depois do PR do app) nao oferece mais essa opcao.
+--
+-- ORDEM DE USO
+--   R.A) Conferencia antes (somente leitura). Rode cada consulta
+--        separadamente e salve.
+--   R.B) Reversao: selecione do "begin;" ao "commit;" e rode de uma vez.
+--        Se der erro, rode "rollback;" sozinho; nada fica gravado.
+--   R.C) Conferencia depois (somente leitura): 3 linhas de teste, checks
+--        antigos, trigger BEFORE UPDATE, foto do consultorio igual a A.5
+--        do arquivo da mudanca.
+--
+-- Dica: o SQL Editor mostra somente o resultado do ultimo comando.
+-- Rode cada consulta de leitura separadamente (selecione e rode).
+-- =====================================================================
+
+
+-- =====================================================================
+-- R.A) CONFERENCIA ANTES (somente leitura)
+-- =====================================================================
+
+-- R.A.1) Conflito com o indice unico. Esperado: 0.
+-- select count(*) as conflitos
+-- from public.metas
+-- where (projeto, titulo_normalizado) in (
+--   ('Versa3D',         'meta teste 1'),
+--   ('Versa3D Medidor', 'meta teste 2'),
+--   ('Versa3D Inicial', 'meta teste 3')
+-- )
+--    or id in (
+--   '90e8a037-59a4-455a-87ce-db10d7c3a1f6',
+--   '7f0c2329-da42-42d3-bdf7-8501424ceb51',
+--   'b5358702-2331-47f6-a75e-b6e1bb575d86'
+-- );
+
+-- R.A.2) Linhas que o check antigo recusaria. Esperado: 0 (por desenho).
+-- select count(*) as recusadas_pelo_check_antigo
+-- from public.metas
+-- where not (responsaveis <@ array['Rafael', 'Daniel', 'Terceiro', 'Indefinido']::text[])
+--    or (origem_discussao is not null
+--        and origem_discussao not in ('sugestao_rafael', 'sugestao_daniel', 'discutido_ambos'));
+
+
+-- =====================================================================
+-- R.B) REVERSAO (uma transacao, tudo ou nada)
+-- =====================================================================
+
+-- begin;
+--
+-- -- R.B.1) Checks antigos, exatamente como em 20261111_metas.sql
+-- alter table public.metas drop constraint metas_responsaveis_check;
+-- alter table public.metas add constraint metas_responsaveis_check
+--   check (responsaveis <@ array['Rafael', 'Daniel', 'Terceiro', 'Indefinido']::text[]);
+--
+-- alter table public.metas drop constraint metas_origem_discussao_check;
+-- alter table public.metas add constraint metas_origem_discussao_check
+--   check (origem_discussao in (
+--     'sugestao_rafael', 'sugestao_daniel', 'discutido_ambos'
+--   ));
+--
+-- -- R.B.2) Funcao antiga, exatamente como em 20261111_metas.sql
+-- create or replace function public.metas_before_update()
+-- returns trigger
+-- language plpgsql
+-- set search_path = public
+-- as $$
+-- begin
+--   new.atualizado_em := now();
+--
+--   if new.status = 'concluido' then
+--     if old.status is distinct from 'concluido' or new.concluido_em is null then
+--       new.concluido_em := now();
+--     end if;
+--   else
+--     new.concluido_em := null;
+--   end if;
+--
+--   return new;
+-- end;
+-- $$;
+--
+-- -- R.B.3) Trigger antigo: somente BEFORE UPDATE.
+-- --        Recriado ANTES do insert do R.B.4, para que o insert preserve
+-- --        o atualizado_em original (o trigger antigo nao roda em INSERT).
+-- drop trigger if exists metas_before_update on public.metas;
+-- create trigger metas_before_update
+--   before update on public.metas
+--   for each row
+--   execute function public.metas_before_update();
+--
+-- -- R.B.4) As 3 linhas de teste, com os MESMOS ids e valores originais.
+-- insert into public.metas
+--   (id, area_gestao, tipo, titulo, titulo_normalizado, detalhe, projeto,
+--    frente, responsaveis, nome_terceiro, prioridade, prazo, status,
+--    origem_discussao, fonte, resolucao, criado_em, atualizado_em,
+--    concluido_em)
+-- values
+--   ('90e8a037-59a4-455a-87ce-db10d7c3a1f6', 'versa3d', 'tarefa',
+--    'Meta teste 1', 'meta teste 1', null, 'Versa3D',
+--    'Técnico', array['Rafael']::text[], null,
+--    'urgente', null, 'a_fazer',
+--    null, 'teste', null,
+--    '2026-11-12 20:27:33.693586+00', '2026-11-12 20:27:33.693586+00',
+--    null),
+--   ('7f0c2329-da42-42d3-bdf7-8501424ceb51', 'versa3d', 'decisao',
+--    'Meta teste 2', 'meta teste 2', null, 'Versa3D Medidor',
+--    'Comercial', array['Rafael', 'Daniel']::text[], null,
+--    'importante', null, 'backlog',
+--    'sugestao_rafael', 'teste', null,
+--    '2026-11-12 20:27:33.693586+00', '2026-11-12 20:27:33.693586+00',
+--    null),
+--   ('b5358702-2331-47f6-a75e-b6e1bb575d86', 'versa3d', 'bloqueio',
+--    'Meta teste 3', 'meta teste 3', null, 'Versa3D Inicial',
+--    'Operação', array['Terceiro']::text[], 'Fornecedor teste',
+--    'depois', null, 'aguardando',
+--    null, 'teste', null,
+--    '2026-11-12 20:27:33.693586+00', '2026-11-12 20:27:33.693586+00',
+--    null);
+--
+-- commit;
+
+
+-- =====================================================================
+-- R.C) CONFERENCIA DEPOIS (somente leitura)
+-- =====================================================================
+
+-- R.C.1) Esperado: fonte = teste, linhas = 3.
+-- select fonte, count(*) as linhas
+-- from public.metas
+-- where fonte = 'teste'
+-- group by fonte;
+
+-- R.C.2) As 3 linhas completas. Compare com o A.2 salvo antes da mudanca:
+--        devem ser identicas.
+-- select to_jsonb(m) as linha
+-- from public.metas m
+-- where m.fonte = 'teste'
+-- order by m.titulo;
+
+-- R.C.3) Checks antigos de volta (com 'Daniel' e as 3 origens).
+-- select conname, pg_get_constraintdef(oid) as definicao
+-- from pg_constraint
+-- where conrelid = 'public.metas'::regclass
+--   and conname in ('metas_responsaveis_check', 'metas_origem_discussao_check')
+-- order by conname;
+
+-- R.C.4) Trigger antigo. Esperado: BEFORE UPDATE (sem INSERT).
+-- select t.tgname as trigger, pg_get_triggerdef(t.oid) as definicao
+-- from pg_trigger t
+-- where t.tgrelid = 'public.metas'::regclass
+--   and not t.tgisinternal;
+
+-- R.C.5) Foto do consultorio. Deve ser IDENTICA ao A.5 do arquivo da
+--        mudanca.
+-- select
+--   (select count(*)
+--      from pg_class c
+--      join pg_namespace n on n.oid = c.relnamespace
+--     where n.nspname = 'consultorio'
+--       and c.relkind in ('r', 'p'))                       as tabelas,
+--   (select count(*)
+--      from pg_class c
+--      join pg_namespace n on n.oid = c.relnamespace
+--     where n.nspname = 'consultorio'
+--       and c.relkind in ('v', 'm'))                       as views,
+--   (select count(*)
+--      from pg_proc p
+--      join pg_namespace n on n.oid = p.pronamespace
+--     where n.nspname = 'consultorio')                     as funcoes,
+--   (select count(*)
+--      from pg_trigger t
+--      join pg_class c on c.oid = t.tgrelid
+--      join pg_namespace n on n.oid = c.relnamespace
+--     where n.nspname = 'consultorio'
+--       and not t.tgisinternal)                            as triggers,
+--   (select count(*)
+--      from pg_policies
+--     where schemaname = 'consultorio')                    as policies,
+--   (select md5(coalesce(string_agg(
+--             concat_ws('|', tablename, policyname, permissive, roles::text,
+--                       cmd, coalesce(qual, ''), coalesce(with_check, '')),
+--             E'\n' order by tablename, policyname), ''))
+--      from pg_policies
+--     where schemaname = 'consultorio')                    as md5_policies;
