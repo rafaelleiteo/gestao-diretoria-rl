@@ -93,8 +93,8 @@ const EXEMPLO_JSON = `[
     "prioridade": "importante",
     "prazo": "2026-12-15",
     "status": "a_fazer",
-    "origem_discussao": "discutido_ambos",
-    "fonte": "reunião 12/11"
+    "origem_discussao": "sugestao_rafael",
+    "fonte": "levantamento Versa3D"
   }
 ]`;
 
@@ -827,9 +827,8 @@ function Importacao({
   runPrevia: (args: { data: DadosImportacao }) => Promise<PreviaImportacao>;
   runConfirmar: (args: { data: DadosImportacao }) => Promise<{
     inseridos: number;
-    ignoradosNaGravacao: number;
     duplicados: number;
-    invalidos: number;
+    avisos: number;
   }>;
   aoConcluir: () => void;
 }) {
@@ -839,6 +838,7 @@ function Importacao({
   const [ocupado, setOcupado] = useState(false);
 
   const previaValida = previa?.ok && textoDaPrevia === texto;
+  const podeGravar = !!previaValida && !!previa?.podeGravar;
 
   const gerarPrevia = async () => {
     setOcupado(true);
@@ -858,9 +858,7 @@ function Importacao({
     setOcupado(true);
     try {
       const r = await runConfirmar({ data: { area, jsonText: texto } });
-      const extra = r.ignoradosNaGravacao
-        ? `, ${r.ignoradosNaGravacao} já existiam no momento da gravação`
-        : "";
+      const extra = r.duplicados ? `, ${r.duplicados} duplicada(s) ignorada(s)` : "";
       toast.success(`${r.inseridos} meta(s) gravada(s)${extra}`);
       setTexto("");
       setPrevia(null);
@@ -880,9 +878,11 @@ function Importacao({
           Importar metas (JSON)
         </h2>
         <p className="mt-1 text-[12px]" style={{ color: COR.secundario }}>
-          Cole um array JSON. Campos: tipo, titulo, detalhe, projeto, area (vira a frente),
-          responsaveis, nome_terceiro, prioridade, prazo, status, origem_discussao, fonte. Acentos e
-          maiúsculas são ignorados. Itens já existentes nunca são alterados.
+          Cole um array JSON, ou um objeto {"{"} "fonte": "...", "metas": [ ... ] {"}"}. Campos:
+          tipo, titulo, detalhe, projeto, area (vira a frente), responsaveis, nome_terceiro,
+          prioridade, prazo, status, concluido_em (só com status concluido, AAAA-MM-DD),
+          origem_discussao, fonte (padrão: importacao). Acentos e maiúsculas são ignorados. Nada é
+          gravado se houver item inválido. Itens já existentes nunca são alterados.
         </p>
       </div>
 
@@ -899,13 +899,28 @@ function Importacao({
         <BotaoSecundario onClick={gerarPrevia} disabled={ocupado || !texto.trim()}>
           1. Gerar prévia
         </BotaoSecundario>
-        <BotaoPrimario
-          onClick={confirmar}
-          disabled={ocupado || !previaValida || (previa?.novos.length ?? 0) === 0}
-        >
-          2. Confirmar e gravar {previaValida ? `(${previa!.novos.length})` : ""}
+        <BotaoPrimario onClick={confirmar} disabled={ocupado || !podeGravar}>
+          2. Confirmar e gravar {podeGravar ? `(${previa!.novos.length})` : ""}
         </BotaoPrimario>
       </div>
+
+      {previa?.ok && (
+        <div className="space-y-1 text-[12px]" style={{ color: COR.secundario }}>
+          <p>
+            Total no JSON: {previa.total} · Serão criadas: {previa.novos.length} · Duplicadas
+            ignoradas: {previa.duplicados.length} · Com erro: {previa.invalidos.length} · Com aviso:{" "}
+            {previa.avisos.length} · Fonte padrão: {previa.fonte}
+          </p>
+          {previa.invalidos.length > 0 && (
+            <p className="text-[#B91C1C]">
+              Há itens com erro. Nada será gravado até o JSON inteiro estar correto.
+            </p>
+          )}
+          {previa.avisosGerais.map((a, k) => (
+            <p key={k}>Aviso: {a}</p>
+          ))}
+        </div>
+      )}
 
       {previa && textoDaPrevia !== texto && (
         <p className="text-[12px]" style={{ color: COR.secundario }}>
@@ -914,7 +929,7 @@ function Importacao({
       )}
 
       {previa?.ok && (
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2">
           <GrupoPrevia titulo={`Novos (${previa.novos.length})`} destaque>
             {previa.novos.map((n) => (
               <li key={n.indice}>
@@ -947,6 +962,19 @@ function Importacao({
                 {i.titulo || "(sem título)"}
                 <ul className="mt-0.5 list-disc pl-4 text-[#B91C1C]">
                   {i.motivos.map((m, k) => (
+                    <li key={k}>{m}</li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </GrupoPrevia>
+          <GrupoPrevia titulo={`Avisos (${previa.avisos.length})`}>
+            {previa.avisos.map((a) => (
+              <li key={a.indice}>
+                <span style={{ color: COR.secundario }}>#{a.indice}</span>{" "}
+                {a.titulo || "(sem título)"}
+                <ul className="mt-0.5 list-disc pl-4" style={{ color: COR.secundario }}>
+                  {a.mensagens.map((m, k) => (
                     <li key={k}>{m}</li>
                   ))}
                 </ul>

@@ -9,6 +9,7 @@ import {
   areaMetasHabilitada,
   chaveDuplicidade,
   itemImportacaoSchema,
+  mensagemDoIssue,
   paraInsert,
   type Meta,
   type PreviaImportacao,
@@ -35,13 +36,21 @@ const areaSchema = z
 
 async function chavesExistentes(context: Ctx): Promise<Set<string>> {
   // O indice unico e (projeto, titulo_normalizado) em toda a tabela, nao so na area.
-  const { data, error } = await metas(context).select("projeto, titulo_normalizado");
-  if (error) throw new Error("Erro ao conferir duplicados: " + error.message);
-  return new Set(
-    ((data ?? []) as { projeto: string; titulo_normalizado: string }[]).map((r) =>
-      chaveDuplicidade(r.projeto, r.titulo_normalizado),
-    ),
-  );
+  // Le em paginas: a API do Supabase devolve no maximo 1000 linhas por consulta,
+  // e sem paginar um duplicado alem da linha 1000 nao seria detectado na previa.
+  const PAGINA = 1000;
+  const chaves = new Set<string>();
+  for (let inicio = 0; ; inicio += PAGINA) {
+    const { data, error } = await metas(context)
+      .select("projeto, titulo_normalizado")
+      .order("id", { ascending: true })
+      .range(inicio, inicio + PAGINA - 1);
+    if (error) throw new Error("Erro ao conferir duplicados: " + error.message);
+    const linhas = (data ?? []) as { projeto: string; titulo_normalizado: string }[];
+    for (const r of linhas) chaves.add(chaveDuplicidade(r.projeto, r.titulo_normalizado));
+    if (linhas.length < PAGINA) break;
+  }
+  return chaves;
 }
 
 export const listarMetas = createServerFn({ method: "GET" })
@@ -66,7 +75,7 @@ export const criarMeta = createServerFn({ method: "POST" })
     await exigirAdmin(context);
     const parsed = itemImportacaoSchema.safeParse(data.item);
     if (!parsed.success) {
-      throw new Error(parsed.error.issues.map((i) => i.message).join("; "));
+      throw new Error(parsed.error.issues.map(mensagemDoIssue).join("; "));
     }
     const row = paraInsert(parsed.data, data.area);
     if (!row.titulo_normalizado) throw new Error("titulo: obrigatório");
@@ -141,8 +150,12 @@ export const previaImportacaoMetas = createServerFn({ method: "POST" })
     return analisarLote(data.jsonText, data.area, existentes);
   });
 
-// Etapa 2: confirmacao. Refaz a analise no servidor (o banco pode ter mudado desde a previa)
-// e grava somente os novos. Nunca atualiza nem sobrescreve: on conflict do nothing.
+// Etapa 2: confirmacao. Refaz a analise no servidor (o banco pode ter mudado desde a previa).
+// Tudo ou nada:
+// - se qualquer item for invalido, nada e gravado;
+// - os novos vao em UM insert (uma unica instrucao no banco): ou entram todos, ou nenhum.
+// Nunca atualiza nem sobrescreve: e insert puro (sem upsert). Se uma meta igual surgir
+// entre a analise e a gravacao, o indice unico recusa o lote inteiro.
 export const confirmarImportacaoMetas = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: unknown) => importacaoSchema.parse(data))
@@ -151,23 +164,28 @@ export const confirmarImportacaoMetas = createServerFn({ method: "POST" })
     const existentes = await chavesExistentes(context);
     const analise = analisarLote(data.jsonText, data.area, existentes);
     if (!analise.ok) throw new Error(analise.erroGeral ?? "Lote inválido.");
+    if (analise.invalidos.length > 0) {
+      throw new Error(
+        `${analise.invalidos.length} item(ns) inválido(s). Corrija o JSON e gere a prévia de novo. Nada foi gravado.`,
+      );
+    }
+    if (analise.novos.length === 0) throw new Error("Nenhuma meta nova para gravar.");
 
-    let inseridos = 0;
-    if (analise.novos.length > 0) {
-      const { data: rows, error } = await metas(context)
-        .upsert(
-          analise.novos.map((n) => n.meta),
-          { onConflict: "projeto,titulo_normalizado", ignoreDuplicates: true },
-        )
-        .select("id");
-      if (error) throw new Error("Erro ao gravar: " + error.message);
-      inseridos = (rows ?? []).length;
+    const { data: rows, error } = await metas(context)
+      .insert(analise.novos.map((n) => n.meta))
+      .select("id");
+    if (error) {
+      if (error.code === "23505") {
+        throw new Error(
+          "Uma das metas passou a existir depois da prévia. Nada foi gravado. Gere a prévia de novo.",
+        );
+      }
+      throw new Error("Erro ao gravar (nada foi gravado): " + error.message);
     }
 
     return {
-      inseridos,
-      ignoradosNaGravacao: analise.novos.length - inseridos,
+      inseridos: (rows ?? []).length,
       duplicados: analise.duplicados.length,
-      invalidos: analise.invalidos.length,
+      avisos: analise.avisos.length,
     };
   });
